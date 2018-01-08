@@ -22,6 +22,7 @@ module httpev
   require "event2/keyvalq_struct.h";
   require "event2/util.h";
   require "stdio.h";
+  require "chrest.h";
 
   extern "struct event_base" record event_base{};
   extern "struct evhttp" record evhttp{};
@@ -35,6 +36,11 @@ module httpev
   };
   extern "struct evhttp_uri" record evhttp_uri{};
   //Some C functions bindings.
+
+
+extern proc get_port_from_request():c_int;
+
+
 
   extern proc event_base_new() : c_ptr(event_base);
   extern proc evhttp_new(base) : c_ptr(evhttp);
@@ -97,10 +103,19 @@ extern proc evhttp_request_get_uri(const req
                                    : c_ptr(evhttp_request)) : c_string;
 extern proc evhttp_uri_parse_with_flags(source_uri
                                         : c_string, flags) : c_ptr(evhttp_uri);
+
+extern proc evhttp_uri_parse(source_uri: c_string) : c_ptr(evhttp_uri);
 extern proc evhttp_uri_get_path(uri
                                 : c_ptr(evhttp_uri)) : c_string;
 extern proc evhttp_uri_get_query(const uri
                                  : c_ptr(evhttp_uri)) : c_string;
+
+extern proc  evhttp_uri_get_host(uri: c_ptr(evhttp_uri ) ):c_string;
+extern proc  evhttp_uri_get_port(uri: c_ptr(evhttp_uri ) ):c_int;
+//extern proc  evhttp_uri_get_path(uri: c_ptr(evhttp_uri ) ):c_string;
+//extern proc  evhttp_uri_get_query(uri: c_ptr(evhttp_uri ) ):c_string;
+extern proc  evhttp_uri_get_fragment(uri: c_ptr(evhttp_uri ) ):c_string;
+
 
 //Main entry point for requests callback
 
@@ -124,8 +139,11 @@ type uint16_t = c_ushort;
 extern proc  event_init():c_ptr(event_base);
 extern proc  event_dispatch():c_int;
 extern proc  evhttp_start( address: c_string, port: uint16_t ):c_ptr(evhttp);
-extern proc  evhttp_set_gencb(http:c_ptr(evhttp), cb:c_fn_ptr , arg: c_void_ptr ):c_void_ptr;
+//extern proc evhttp_connection_get_base( evcon:c_ptr(evhttp_connection),address:c_ptr(c_ptr(c_char)), port:c_ptr(c_short));
 
+
+//extern proc  evhttp_set_gencb(http:c_ptr(evhttp), cb:c_fn_ptr , arg: c_void_ptr ):c_void_ptr;
+/*
 extern proc  evbuffer_new():c_ptr(evbuffer );
 extern proc  evbuffer_free(buf: c_ptr(evbuffer ) ):c_void_ptr;
 
@@ -133,7 +151,7 @@ extern proc  evbuffer_add_printf(buf: c_ptr(evbuffer), fmt: c_string ):c_int;
 extern proc  evhttp_send_reply(req:c_ptr(evhttp_request),code: c_int, reason: c_string, databuf: c_ptr(evbuffer ) ):c_void_ptr;
 
 extern proc  evhttp_request_get_uri(req: c_ptr(evhttp_request ) ):c_string;
-extern proc  evhttp_uri_parse_with_flags( evhttp_uri: evhttp_uri, source_uri: c_string, flags: c_uint ):c_ptr(evhttp_uri );
+//extern proc  evhttp_uri_parse_with_flags( evhttp_uri: evhttp_uri, source_uri: c_string, flags: c_uint ):c_ptr(evhttp_uri );
 extern proc  evhttp_uri_set_flags(flags: c_uint ):c_void_ptr;
 extern proc  evhttp_uri_get_scheme(uri: c_ptr(evhttp_uri ) ):c_string;
 extern proc  evhttp_uri_get_userinfo(uri: c_ptr(evhttp_uri ) ):c_string;
@@ -149,6 +167,6 @@ extern proc  evhttp_uri_set_port(port: c_int ):c_int;
 extern proc  evhttp_uri_set_path(path: c_string ):c_int;
 extern proc  evhttp_uri_set_query(query: c_string ):c_int;
 extern proc  evhttp_uri_set_fragment(fragment: c_string ):c_int;
-
+*/
 
 }

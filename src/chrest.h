@@ -22,7 +22,13 @@
 #include <event.h>
 #include <evhttp.h>
 
-int init_server();
-void generic_request_handler(struct evhttp_request *req, void *arg);
+//int init_server();
+//void generic_request_handler(struct evhttp_request *req, void *arg);
+
+int get_port_from_request(){
+
+    return 0;
+}
+
 
 #endif
