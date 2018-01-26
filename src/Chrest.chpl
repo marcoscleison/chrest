@@ -293,7 +293,7 @@ Sends the content to the client
     this.AddHeader("X-Powered-By","Chrest Framework");
     evhttp_send_reply(this.handle, code, motiv.localize().c_str(), this.buffer);
     //evhttp_clear_headers(&headers);
-    //evbuffer_free(buffer);
+    evbuffer_free(this.Handler);
   }
   /*
   Error msg
