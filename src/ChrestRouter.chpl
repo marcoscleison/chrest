@@ -54,6 +54,7 @@ use Regexp;
             for idx in this.getRoutesDomain{
                 var route = this.getRoutes[idx];            
                 if(route.Matched(path)){
+                    
                     route.CallGetController(path, this.req, this.arg);
                     found=true;
                     break;
