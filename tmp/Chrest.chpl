@@ -22,8 +22,6 @@ module Chrest
     use SysCTypes;
     use Regexp;
     use httpev;
-    use ChrestRouter;
-    
 
     var chrstServerDomain : domain(int);
     var chrstServers : [chrstServerDomain] Chrest;
@@ -67,14 +65,12 @@ module Chrest
         var srv_ptr:c_ptr(Chrest) = arg:c_ptr(Chrest);
         var srv : Chrest = srv_ptr.deref();
         
-        /*if (chrstServerDomain.member( arg:int))
+        if (chrstServerDomain.member( arg:int))
         {
             writeln(" sending request");
             var srv : Chrest = chrstServers[ arg:int];
             srv._handler(req, arg);
-        }*/
-          srv  = chrstServers[ arg:int];
-            srv._handler(req, arg);
+        }
         return;
     }
 
@@ -162,11 +158,11 @@ module Chrest
 
 
 
-        proc Request(req,arg,params){
+        proc Request(req,arg,params:[?D]string){
             
             this.req = req;
             this.arg = arg;
-            //this.paramsDomain = D;
+            this.paramsDomain = D;
             this.url_params = params;
             
             
@@ -361,6 +357,75 @@ TODO: Add options.
 
     } 
 
+    class Router
+    {
+
+        var req:c_ptr(evhttp_request);
+        var arg:c_void_ptr;
+
+        var srv : Chrest;
+        var routesDomain : domain(string);
+        var routes : [routesDomain] ChrestController;
+
+        var getRoutesDomain:domain(string);
+
+        var getRoutes:[getRoutesDomain]RoutePattern;
+
+        proc Router(srv)
+        {
+            this.srv = srv;
+        }
+        proc Handler(req:c_ptr(evhttp_request), arg:c_void_ptr)
+        {
+            var req_url = evhttp_request_get_uri(req);
+            var evuri = evhttp_uri_parse(req_url);
+            var path = new string(evhttp_uri_get_path(evuri));
+            var verb = Helpers.getEvHttpVerb(req);
+
+            this.req = req;
+            this.arg = arg;
+
+            writeln("VERB = ", verb," path =",path);
+
+
+            if(verb == "GET"){
+                this.processGetPathPattern(path);
+            }
+
+        }
+        
+        proc Get(uri:string, controller:ChrestController)
+        {
+            this.getRoutes[uri] = new RoutePattern(uri,controller);
+        }
+
+        proc processGetPathPattern(path)
+        {
+            var found=false;
+            
+            for idx in this.getRoutesDomain{
+                var route = this.getRoutes[idx];            
+                if(route.Matched(path)){
+                    route.CallGetController(path, this.req, this.arg);
+                    found=true;
+                    break;
+                }
+            }
+            if(!found){
+                //Error controller
+            }
+
+            /*writeln("Is match =",route.Matched(s));
+            var params = route.processUrl(s); 
+            for k in params.domain{
+                writeln("key = ",k," value = ",params[k]);
+            }*/
+        }
+
+    }
+
+   
+
     class MyController:ChrestController{
         
         proc Get(ref Req:Request, ref res:Response){
@@ -371,36 +436,26 @@ TODO: Add options.
              res.Send();    
         }
     }
-
-    class MyCon:ChrestController{
-        
-        proc Get(ref req:Request, ref res:Response){
-             
-             writeln("Get recebendo2");
-             res.Write("Oi Mundo2");
-             //res.Write(req.Params(":id"));
-
-             res.Send();    
-        }
-    }
-    /*class MyController2:ChrestController{
+    class MyController2:ChrestController{
         
         proc Get(ref req:Request, ref res:Response){
              
              writeln("Get recebendo 2");
              res.Write("Oi Mundo controler 2");
 
-             //res.Write(req.Params(":id"));
+             res.Write(req.Params(":id"));
+
+
              res.Send();    
         }
-    }*/
+    }
 
     proc ChrestTest()
     {
 
         var srv = new Chrest("127.0.0.1",8080);
         srv.Routes().Get("/",new MyController());
-        srv.Routes().Get("/teste",new MyCon());
+        srv.Routes().Get("/teste/:id",new MyController2());
         srv.Listen();
         srv.Close();
         
