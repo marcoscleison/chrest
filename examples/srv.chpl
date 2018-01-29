@@ -16,6 +16,8 @@ module Main{
             res.Write("teste controller");
             //This gets the parameter id 
             res.Write(" id = ", req.Param("id"));
+            res.Write(" name = ", req.Param("name"));
+            
             res.Send(); 
         }
     }
@@ -26,7 +28,7 @@ module Main{
         var srv = new Chrest("127.0.0.1",8080);
         //Regiser Get urls
         srv.Routes().Get("/",new HelloController());
-        srv.Routes().Get("/teste/:id",new TestController());
+        srv.Routes().Get("/teste/:id/:name",new TestController());
         //Listen loop
         srv.Listen();
         //Closes connection
