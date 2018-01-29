@@ -203,8 +203,8 @@ module Chrest
 
         }
         proc Param(key:string,default:string=""):string{
-            if(paramsDomain.member(key)){
-                return this.url_params[key];
+            if(paramsDomain.member(":"+key)){
+                return this.url_params[":"+key];
             }
             return default;
         }
