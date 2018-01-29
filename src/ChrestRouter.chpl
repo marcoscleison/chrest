@@ -44,7 +44,9 @@ use Regexp;
         
         proc Get(uri:string, controller:ChrestController)
         {
-            this.getRoutes[uri] = new RoutePattern(uri,controller);
+            var rp = new RoutePattern(uri,controller);
+            writeln("Registering uri ",uri," pattern ",rp.getRegexPattern());
+            this.getRoutes[rp.getRegexPattern()] = rp;
         }
 
         proc processGetPathPattern(path)
@@ -54,10 +56,11 @@ use Regexp;
             for idx in this.getRoutesDomain{
                 var route = this.getRoutes[idx];            
                 if(route.Matched(path)){
-                    
                     route.CallGetController(path, this.req, this.arg);
                     found=true;
                     break;
+                }else{
+                    writeln("Not match path=", path);
                 }
             }
             if(!found){
@@ -84,7 +87,8 @@ use Regexp;
         var route:string;
         var pattern:string;
         var r:regexp;
-        var controller:ChrestController;
+        var controller:ChrestControllerInterface;
+
 
         /*var req:c_ptr(evhttp_request)
         var arg:c_void_ptr;
@@ -99,7 +103,11 @@ use Regexp;
                 writeln("Error to compile url pattern");
             }
 
-            this.controller= controller;
+            this.controller = new ChrestControllerInterface(controller);
+        }
+
+        proc getRegexPattern():string{
+            return this.pattern;
         }
 
         proc patternToRegex(pattern:string):string{
@@ -117,7 +125,7 @@ use Regexp;
                 }
             }
 
-            return "/".join(fragments);
+            return "/".join(fragments)+"$";
         }
 
         
@@ -173,15 +181,31 @@ use Regexp;
         return ret;
     }
         proc CallGetController(path:string,req:c_ptr(evhttp_request), arg:c_void_ptr){
-                       
+            //var dparam:domain(string);           
             var params = this.processParams(this.route,path);
+
+            writeln("matched ",path);
+                  
+            var request = new Request(req,arg,params);
+            var response = new Response(req, arg); 
+           // response.Write("Oi ", path);
+            //for p in params{
+              //  response.Write(" k =",p," = ",request.Param(p)," ");
+            //}
+
+           // response.Send();
+            if(this.controller!=nil){
+               writeln("Controller  found");
+               this.controller.Get(request,response);
+               writeln("Controller  found"); 
+            }
         
-            if(controller!=nil){
+            /*if(controller!=nil){
                 var request = new Request(req,arg,params);
                 var response = new Response(req, arg);
                 //writeln("Calling controller");
                 controller.Get(request,response);
-            }
+            }*/
         }
     }
 
@@ -208,16 +232,38 @@ use Regexp;
 
         }*/
 
+
+proc patternToRegex(pattern:string):string{
+            var fragments:[{1..0}]string;
+            var allowedParamChars:string = "[a-zA-Z0-9\\_\\-]+";
+            var group:int = 1;
+
+            for part in pattern.split('/'){
+                if(part.startsWith(":")){
+                    var rgx ="(?P<"+group+">" + allowedParamChars + ")";
+                    fragments.push_back(rgx);
+                    group+=1;
+                }else{
+                    fragments.push_back(part);
+                }
+            }
+
+            return "/".join(fragments);
+        }
+
+
+
 proc routerTest(){
 
 
-    var purl="/user/:id/:guid";
+    var purl="/user/:id/test";
     var rgx = patternToRegex(purl);
     
+    writeln(rgx);
 
     var url = "/user/1/teste";
 
-
+/*
     try{
             var r:regexp = compile(rgx);
             writeln(rgx);
@@ -253,6 +299,7 @@ proc routerTest(){
     }catch{
          writeln("error");
     }
+    */
 }
 
 

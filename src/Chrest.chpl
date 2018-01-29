@@ -162,11 +162,11 @@ module Chrest
 
 
 
-        proc Request(req,arg,params){
+        proc Request(req,arg,params:[?D]string){
             
             this.req = req;
             this.arg = arg;
-            //this.paramsDomain = D;
+            this.paramsDomain = D;
             this.url_params = params;
             
             
@@ -202,9 +202,9 @@ module Chrest
             }
 
         }
-        proc Param(key:string,default:string=nil):string{
-            if(paramsDomain.member(key)){
-                return this.url_params[key];
+        proc Param(key:string,default:string=""):string{
+            if(paramsDomain.member(":"+key)){
+                return this.url_params[":"+key];
             }
             return default;
         }
@@ -293,7 +293,7 @@ Sends the content to the client
     this.AddHeader("X-Powered-By","Chrest Framework");
     evhttp_send_reply(this.handle, code, motiv.localize().c_str(), this.buffer);
     //evhttp_clear_headers(&headers);
-    evbuffer_free(this.Handler);
+    //evbuffer_free(this.buffer);
   }
   /*
   Error msg
@@ -330,8 +330,9 @@ TODO: Add options.
 
     class ChrestController
     {
-        proc Get(ref Req:Request, ref res:Response){
-            
+        proc Get(ref req:Request, ref res:Response){
+            writeln("Base");
+            res.Send();
         }
         proc Post(ref Req:Request, ref res:Response){
             
@@ -359,7 +360,12 @@ TODO: Add options.
             
         }
 
-    } 
+    }
+
+    class ChrestControllerInterface{
+        forwarding var controller: ChrestController;
+    }
+
 
     class MyController:ChrestController{
         
