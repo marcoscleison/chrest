@@ -116,6 +116,8 @@ extern proc  evhttp_uri_get_port(uri: c_ptr(evhttp_uri ) ):c_int;
 //extern proc  evhttp_uri_get_query(uri: c_ptr(evhttp_uri ) ):c_string;
 extern proc  evhttp_uri_get_fragment(uri: c_ptr(evhttp_uri ) ):c_string;
 
+//extern proc   evbuffer_free(buffer:c_ptr(evbuffer));
+
 
 //Main entry point for requests callback
 
