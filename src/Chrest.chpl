@@ -23,6 +23,7 @@ module Chrest
     use Regexp;
     use httpev;
     use ChrestRouter;
+    use IO.FormattedIO;
     
 
     var chrstServerDomain : domain(int);
@@ -297,11 +298,16 @@ Sends the content to the client
   }
 
 proc SendJson(obj:?eltType,code:int=HTTP_OK,motiv:string="OK"){
-        this.AddHeader("X-Powered-By","Chrest Framework");
-        this.AddHeader("Content-Type","application/json");
         
-
-        evhttp_send_reply(this.handle, code, motiv.localize().c_str(), this.buffer);
+        try{
+            this.AddHeader("X-Powered-By","Chrest Framework");
+            this.AddHeader("Content-Type","application/json");
+            var jsonstr:string = "%jt".format(obj);
+            this.Write(jsonstr);
+            evhttp_send_reply(this.handle, code, motiv.localize().c_str(), this.buffer);
+        }catch{
+            this.E500();
+        }
 }
 
   /*
@@ -310,6 +316,10 @@ proc SendJson(obj:?eltType,code:int=HTTP_OK,motiv:string="OK"){
   proc E404(str:string="Not Found"){
     this.Write(str);
     this.Send(404,str);
+  }
+  proc E500(str:string="Cannot process data"){
+    this.Write(str);
+    this.Send(500,str);
   }
 
   proc isError():bool{
