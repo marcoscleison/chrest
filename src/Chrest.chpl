@@ -295,6 +295,15 @@ Sends the content to the client
     //evhttp_clear_headers(&headers);
     //evbuffer_free(this.buffer);
   }
+
+proc SendJson(obj:?eltType,code:int=HTTP_OK,motiv:string="OK"){
+        this.AddHeader("X-Powered-By","Chrest Framework");
+        this.AddHeader("Content-Type","application/json");
+        
+
+        evhttp_send_reply(this.handle, code, motiv.localize().c_str(), this.buffer);
+}
+
   /*
   Error msg
   */
