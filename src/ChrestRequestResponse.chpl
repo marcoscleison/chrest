@@ -154,8 +154,10 @@ var buffer:c_ptr(evbuffer);
 var handle:c_ptr(evhttp_request);
 var http_code:int;
 var http_msg:string;
+var issent:bool;
 
   proc Response(request:c_ptr(evhttp_request),  privParams:c_void_ptr){
+    this.issent=false;
     this.handle = request;
     this.buffer = evbuffer_new();
     this.http_code=200;
@@ -192,8 +194,12 @@ Sends the content to the client
   proc Send(code:int=HTTP_OK,motiv:string="OK"){
     this.AddHeader("X-Powered-By","Chrest Framework");
     evhttp_send_reply(this.handle, code, motiv.localize().c_str(), this.buffer);
+    this.issent=true;
     //evhttp_clear_headers(&headers);
     //evbuffer_free(this.buffer);
+  }
+  proc isSent():bool{
+      return this.issent;
   }
 
 proc SendJson(obj:?eltType,code:int=HTTP_OK,motiv:string="OK"){
@@ -203,7 +209,7 @@ proc SendJson(obj:?eltType,code:int=HTTP_OK,motiv:string="OK"){
             this.AddHeader("Content-Type","application/json");
             var jsonstr:string = "%jt".format(obj);
             this.Write(jsonstr);
-            evhttp_send_reply(this.handle, code, motiv.localize().c_str(), this.buffer);
+            //evhttp_send_reply(this.handle, code, motiv.localize().c_str(), this.buffer);
         }catch{
             this.E500();
         }

@@ -339,6 +339,9 @@ use Regexp;
             if(this.controller!=nil){
                this.controller.Get(request,response);
             }
+            if(!response.isSent()){
+                response.Send();
+            }
         
         }
                 
@@ -353,6 +356,9 @@ use Regexp;
 
             if(this.controller!=nil){
                this.controller.Post(request,response);
+            }
+            if(!response.isSent()){
+                response.Send();
             }
         
         }
@@ -370,6 +376,9 @@ use Regexp;
             if(this.controller!=nil){
                this.controller.Put(request,response);
             }
+            if(!response.isSent()){
+                response.Send();
+            }
         
         }
         
@@ -384,6 +393,9 @@ use Regexp;
             
             if(this.controller!=nil){
                this.controller.Delete(request,response);
+            }
+            if(!response.isSent()){
+                response.Send();
             }
         
         }

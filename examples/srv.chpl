@@ -7,7 +7,8 @@ module Main{
             //This wites to the response.
             res.Write("Hello world");
             //this sends the content to browser
-            res.Send(); 
+            //you do not need this; Now router do the work.
+            //res.Send(); 
         }
     }
 
@@ -18,7 +19,8 @@ module Main{
             res.Write(" id = ", req.Param("id"));
             res.Write(" name = ", req.Param("name"));
             
-            res.Send(); 
+            //you do not need this; Now router do the work.
+            //res.Send(); 
         }
     }
 
@@ -47,7 +49,7 @@ module Main{
         proc Get(ref req:Request,ref res:Response){
             var obj = new MyData("Marcos", "marcoscleison@m.co");
             //Sends obj as json
-            writeln("json get");
+            
             res.SendJson(obj); 
         }
 
