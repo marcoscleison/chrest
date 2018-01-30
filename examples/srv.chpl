@@ -120,7 +120,7 @@ module Main{
         srv.Routes().Delete("/json", jsoncontroller);
         
         srv.Routes().Middleware(new LogMiddleware());
-        srv.Routes().Middleware(new BlockPostMiddleware());
+        ///srv.Routes().Middleware(new BlockPostMiddleware());
 
         //Listen loop
         srv.Listen();
