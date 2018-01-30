@@ -16,8 +16,16 @@ use Regexp;
         var routes : [routesDomain] ChrestController;
 
         var getRoutesDomain:domain(string);
-
         var getRoutes:[getRoutesDomain]RoutePattern;
+
+        var postRoutesDomain:domain(string);
+        var postRoutes:[postRoutesDomain]RoutePattern;
+
+        var putRoutesDomain:domain(string);
+        var putRoutes:[putRoutesDomain]RoutePattern;
+
+        var deleteRoutesDomain:domain(string);
+        var deleteRoutes:[deleteRoutesDomain]RoutePattern;
 
         proc Router(srv)
         {
@@ -35,9 +43,18 @@ use Regexp;
 
             writeln("HTTP VERB = ", verb," path =",path);
 
-
             if(verb == "GET"){
                 this.processGetPathPattern(path);
+            }
+            if(verb == "POST"){
+                writeln("processing post");
+                this.processPostPathPattern(path);
+            }
+            if(verb == "PUT"){
+                this.processPutPathPattern(path);
+            }
+            if(verb == "DELETE"){
+                this.processDeletePathPattern(path);
             }
 
         }
@@ -45,14 +62,31 @@ use Regexp;
         proc Get(uri:string, controller:ChrestController)
         {
             var rp = new RoutePattern(uri,controller);
-            writeln("Registering uri ",uri," pattern ",rp.getRegexPattern());
+            writeln("GET: Registering uri ",uri," pattern ",rp.getRegexPattern());
             this.getRoutes[rp.getRegexPattern()] = rp;
+        }
+        proc Post(uri:string, controller:ChrestController)
+        {
+            var rp = new RoutePattern(uri,controller);
+            writeln("POST: Registering uri ",uri," pattern ",rp.getRegexPattern());
+            this.postRoutes[rp.getRegexPattern()] = rp;
+        }
+        proc Put(uri:string, controller:ChrestController)
+        {
+            var rp = new RoutePattern(uri,controller);
+            writeln("PUT: Registering uri ",uri," pattern ",rp.getRegexPattern());
+            this.putRoutes[rp.getRegexPattern()] = rp;
+        }
+        proc Delete(uri:string, controller:ChrestController)
+        {
+            var rp = new RoutePattern(uri,controller);
+            writeln("DELETE: Registering uri ",uri," pattern ",rp.getRegexPattern());
+            this.deleteRoutes[rp.getRegexPattern()] = rp;
         }
 
         proc processGetPathPattern(path)
         {
             var found=false;
-            
             for idx in this.getRoutesDomain{
                 var route = this.getRoutes[idx];            
                 if(route.Matched(path)){
@@ -76,6 +110,78 @@ use Regexp;
                 writeln("key = ",k," value = ",params[k]);
             }*/
         }
+
+        proc processPostPathPattern(path)
+        {
+            var found=false;
+            for idx in this.postRoutesDomain{
+                var route = this.postRoutes[idx];            
+                if(route.Matched(path)){
+                    route.CallPostController(path, this.req, this.arg);
+                    found=true;
+                    break;
+                }else{
+                    writeln("Not match path=", path);
+                }
+            }
+            if(!found){
+                //Error controller
+                var response = new Response(this.req, this.arg);
+                response.E404();
+                
+            }
+
+        }
+
+        proc processPutPathPattern(path)
+        {
+            var found=false;
+            for idx in this.putRoutesDomain{
+                var route = this.putRoutes[idx];            
+                if(route.Matched(path)){
+                    route.CallPutController(path, this.req, this.arg);
+                    found=true;
+                    break;
+                }else{
+                    writeln("Not match path=", path);
+                }
+            }
+            if(!found){
+                //Error controller
+                var response = new Response(this.req, this.arg);
+                response.E404();
+                
+            }
+
+            /*writeln("Is match =",route.Matched(s));
+            var params = route.processUrl(s); 
+            for k in params.domain{
+                writeln("key = ",k," value = ",params[k]);
+            }*/
+        }
+
+        proc processDeletePathPattern(path)
+        {
+            var found=false;
+            for idx in this.deleteRoutesDomain{
+                var route = this.deleteRoutes[idx];            
+                if(route.Matched(path)){
+                    route.CallDeleteController(path, this.req, this.arg);
+                    found=true;
+                    break;
+                }else{
+                    writeln("Delete: Not match path=", path);
+                }
+            }
+            if(!found){
+                //Error controller
+                var response = new Response(this.req, this.arg);
+                response.E404();
+                
+            }
+        }
+
+        
 
     }
 
@@ -180,32 +286,49 @@ use Regexp;
         }
         return ret;
     }
-        proc CallGetController(path:string,req:c_ptr(evhttp_request), arg:c_void_ptr){
-            //var dparam:domain(string);           
-            var params = this.processParams(this.route,path);
 
-            writeln("matched ",path);
-                  
+
+    proc CallGetController(path:string,req:c_ptr(evhttp_request), arg:c_void_ptr){           
+            var params = this.processParams(this.route,path);
             var request = new Request(req,arg,params);
             var response = new Response(req, arg); 
-           // response.Write("Oi ", path);
-            //for p in params{
-              //  response.Write(" k =",p," = ",request.Param(p)," ");
-            //}
-
-           // response.Send();
             if(this.controller!=nil){
-               writeln("Controller  found");
                this.controller.Get(request,response);
-               writeln("Controller  found"); 
             }
         
-            /*if(controller!=nil){
-                var request = new Request(req,arg,params);
-                var response = new Response(req, arg);
-                //writeln("Calling controller");
-                controller.Get(request,response);
-            }*/
+        }
+                
+        proc CallPostController(path:string,req:c_ptr(evhttp_request), arg:c_void_ptr){
+                    
+            var params = this.processParams(this.route,path);          
+            var request = new Request(req,arg,params);
+            var response = new Response(req, arg); 
+            if(this.controller!=nil){
+               this.controller.Post(request,response);
+            }
+        
+        }
+        
+        proc CallPutController(path:string,req:c_ptr(evhttp_request), arg:c_void_ptr){
+                      
+            var params = this.processParams(this.route,path);
+            var request = new Request(req,arg,params);
+            var response = new Response(req, arg); 
+            if(this.controller!=nil){
+               this.controller.Put(request,response);
+            }
+        
+        }
+        
+        proc CallDeleteController(path:string,req:c_ptr(evhttp_request), arg:c_void_ptr){
+                      
+            var params = this.processParams(this.route,path);
+            var request = new Request(req,arg,params);
+            var response = new Response(req, arg); 
+            if(this.controller!=nil){
+               this.controller.Delete(request,response);
+            }
+        
         }
     }
 

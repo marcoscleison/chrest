@@ -32,13 +32,49 @@ module Main{
         }
     }
 
+    class MyJson{
+        var verb:string;
+        var msg:string;
+
+        proc MyJson(verb:string, msg:string){
+            this.verb=verb;
+            this.msg=msg;
+        }
+    }
+
     class JsonController:ChrestController{
         proc Get(ref req:Request,ref res:Response){
-            
             var obj = new MyData("Marcos", "marcoscleison@m.co");
             //Sends obj as json
+            writeln("json get");
             res.SendJson(obj); 
         }
+
+        proc Post(ref req:Request,ref res:Response){
+            var obj = new MyJson("", "");
+            writeln("json post");
+            //Sends obj as json
+            obj=req.InputJson(obj);
+            res.SendJson(obj); 
+        }
+        proc Put(ref req:Request,ref res:Response){
+            var obj = new MyJson("", "");
+            writeln("json put");
+            //Sends obj as json
+            obj=req.InputJson(obj);
+            res.SendJson(obj); 
+        }
+
+        proc Delete(ref req:Request,ref res:Response){
+            var obj = new MyJson("", "");
+            writeln("json delete");
+            //Sends obj as json
+            obj=req.InputJson(obj);
+            res.SendJson(obj); 
+        }
+
+
+
     }
 
     proc main(){
@@ -48,7 +84,15 @@ module Main{
         //Regiser Get urls
         srv.Routes().Get("/",new HelloController());
         srv.Routes().Get("/teste/:id/:name",new TestController());
-        srv.Routes().Get("/json",new JsonController());
+        
+        var jsoncontroller = new JsonController();
+        
+        srv.Routes().Get("/json", jsoncontroller);
+        srv.Routes().Post("/json", jsoncontroller);
+        srv.Routes().Put("/json", jsoncontroller);
+        srv.Routes().Delete("/json", jsoncontroller);
+        
+
         //Listen loop
         srv.Listen();
         //Closes connection

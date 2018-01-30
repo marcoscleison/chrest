@@ -105,12 +105,10 @@ module Chrest
             var serverkey : string = this.addr + ":" + this.port : string;
             this.ebase = event_base_new();
             this.server = evhttp_new(this.ebase);
-            evhttp_set_allowed_methods(this.server, EVHTTP_REQ_GET | EVHTTP_REQ_POST | EVHTTP_REQ_CONNECT | EVHTTP_REQ_HEAD | EVHTTP_REQ_OPTIONS | EVHTTP_REQ_PUT | EVHTTP_REQ_TRACE);
+            evhttp_set_allowed_methods(this.server, EVHTTP_REQ_GET | EVHTTP_REQ_POST | EVHTTP_REQ_CONNECT | EVHTTP_REQ_HEAD | EVHTTP_REQ_OPTIONS | EVHTTP_REQ_PUT | EVHTTP_REQ_TRACE| EVHTTP_REQ_DELETE);
 
             evhttp_set_gencb(this.server, c_ptrTo(_gloablHandler), ptr: c_void_ptr);
 
-
-            
             chrstServers[ptr:int] = this;   
 
             writeln("Creating server ", serverkey);
@@ -161,7 +159,7 @@ module Chrest
         var CookieDomain: domain(string);
         var cookies:[CookieDomain]string; 
 
-
+        var bodyData:string;
 
         proc Request(req,arg,params:[?D]string){
             
@@ -225,7 +223,25 @@ Parses the body of POST,PUT etc. requests
         var data = c_calloc(uint(8), (len+1):size_t);
         evbuffer_copyout(this.buffer, data, len);
         var dados = new string(buff=data, length=len, size=len+1, owned=true, needToCopy=false);
+        
+        this.bodyData = dados;
+
         evhttp_parse_query_str(dados.localize().c_str(), this.params);
+    }
+
+    proc InputJson(ref obj:?eltType){
+        try{
+            var mem = openmem();
+            var writer = mem.writer().write(this.bodyData);
+            var reader = mem.reader();
+            reader.readf("%jt", obj);
+            return obj;
+
+        }catch{
+            writeln("Cannot parse json");
+            writeln("body content ", this.bodyData);
+            return obj;
+        }
     }
 
     proc getUri():string{
@@ -353,29 +369,29 @@ TODO: Add options.
             writeln("Base");
             res.Send();
         }
-        proc Post(ref Req:Request, ref res:Response){
+        proc Post(ref req:Request, ref res:Response){
             
         }
-        proc Put(ref Req:Request, ref res:Response){
+        proc Put(ref req:Request, ref res:Response){
             
         }
-        proc Delete(ref Req:Request, ref res:Response){
+        proc Delete(ref req:Request, ref res:Response){
             
         }
-        proc Head(ref Req:Request, ref res:Response){
+        proc Head(ref req:Request, ref res:Response){
             
         }
-        proc Options(ref Req:Request, ref res:Response){
+        proc Options(ref req:Request, ref res:Response){
             
         }
-        proc Trace(ref Req:Request, ref res:Response){
+        proc Trace(ref req:Request, ref res:Response){
             
         }
-        proc Connect(ref Req:Request, ref res:Response){
+        proc Connect(ref req:Request, ref res:Response){
             
         }
 
-        proc Patch(ref Req:Request, ref res:Response){
+        proc Patch(ref req:Request, ref res:Response){
             
         }
 
@@ -386,67 +402,6 @@ TODO: Add options.
     }
 
 
-    class MyController:ChrestController{
-        
-        proc Get(ref Req:Request, ref res:Response){
-             
-             writeln("Get recebendo");
-             res.Write("Oi Mundo");
-
-             res.Send();    
-        }
-    }
-
-    class MyCon:ChrestController{
-        
-        proc Get(ref req:Request, ref res:Response){
-             
-             writeln("Get recebendo2");
-             res.Write("Oi Mundo2");
-             //res.Write(req.Params(":id"));
-
-             res.Send();    
-        }
-    }
-    /*class MyController2:ChrestController{
-        
-        proc Get(ref req:Request, ref res:Response){
-             
-             writeln("Get recebendo 2");
-             res.Write("Oi Mundo controler 2");
-
-             //res.Write(req.Params(":id"));
-             res.Send();    
-        }
-    }*/
-
-    proc ChrestTest()
-    {
-
-        var srv = new Chrest("127.0.0.1",8080);
-        srv.Routes().Get("/",new MyController());
-        srv.Routes().Get("/teste",new MyCon());
-        srv.Listen();
-        srv.Close();
-        
-
-         
-
-  /*
-
-            writeln("Is match =",route.Matched(s));
-
-            var params = route.processUrl(s); 
-            for k in params.domain{
-                writeln("
-                key = ",k," value = ",params[k]);
-            }
-
-            
-            writeln("");
-            writeln("");
-            writeln("");*/
-    }
 
     /*
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++==
