@@ -1,3 +1,18 @@
+/*
+ * Copyright (C) 2018 Marcos Cleison Silva Santana
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 module ChrestRouter{
 
 use Chrest;
@@ -14,6 +29,8 @@ use Regexp;
         var srv : Chrest;
         var routesDomain : domain(string);
         var routes : [routesDomain] ChrestController;
+
+        var middlewares:[{1..0}]ChrestMiddlewareInterface;
 
         var getRoutesDomain:domain(string);
         var getRoutes:[getRoutesDomain]RoutePattern;
@@ -58,28 +75,36 @@ use Regexp;
             }
 
         }
+
+        proc Middleware(mdl:ChrestMiddleware){
+            this.middlewares.push_back(new ChrestMiddlewareInterface(mdl));
+        }
+
+        proc getMiddlewares(){
+           return this.middlewares;
+        }
         
         proc Get(uri:string, controller:ChrestController)
         {
-            var rp = new RoutePattern(uri,controller);
+            var rp = new RoutePattern(uri,controller,this);
             writeln("GET: Registering uri ",uri," pattern ",rp.getRegexPattern());
             this.getRoutes[rp.getRegexPattern()] = rp;
         }
         proc Post(uri:string, controller:ChrestController)
         {
-            var rp = new RoutePattern(uri,controller);
+            var rp = new RoutePattern(uri,controller,this);
             writeln("POST: Registering uri ",uri," pattern ",rp.getRegexPattern());
             this.postRoutes[rp.getRegexPattern()] = rp;
         }
         proc Put(uri:string, controller:ChrestController)
         {
-            var rp = new RoutePattern(uri,controller);
+            var rp = new RoutePattern(uri,controller,this);
             writeln("PUT: Registering uri ",uri," pattern ",rp.getRegexPattern());
             this.putRoutes[rp.getRegexPattern()] = rp;
         }
         proc Delete(uri:string, controller:ChrestController)
         {
-            var rp = new RoutePattern(uri,controller);
+            var rp = new RoutePattern(uri,controller,this);
             writeln("DELETE: Registering uri ",uri," pattern ",rp.getRegexPattern());
             this.deleteRoutes[rp.getRegexPattern()] = rp;
         }
@@ -191,6 +216,7 @@ use Regexp;
  class RoutePattern
     {
         var route:string;
+        var router:Router;
         var pattern:string;
         var r:regexp;
         var controller:ChrestControllerInterface;
@@ -199,9 +225,11 @@ use Regexp;
         /*var req:c_ptr(evhttp_request)
         var arg:c_void_ptr;
         */
-        proc RoutePattern(route:string, controller:ChrestController){
+        proc RoutePattern(route:string, controller:ChrestController,router:Router){
            
             this.route = route;
+            this.router = router;
+
             this.pattern = this.patternToRegex(this.route);
             try{
                 this.r = compile(this.pattern);
@@ -287,11 +315,27 @@ use Regexp;
         return ret;
     }
 
+    proc runMiddleWares(ref req:Request, ref res:Response):bool{
+        var forward = true;
+        for mdl in this.router.getMiddlewares(){
+            forward = forward & mdl.handle(req,res);
+            if(!forward){
+                break;
+            }
+        }
+        writeln("forward ",forward);
+        return forward;
+    }
+
 
     proc CallGetController(path:string,req:c_ptr(evhttp_request), arg:c_void_ptr){           
             var params = this.processParams(this.route,path);
             var request = new Request(req,arg,params);
-            var response = new Response(req, arg); 
+            var response = new Response(req, arg);
+            if(!this.runMiddleWares(request,response)){
+                return;
+            }
+
             if(this.controller!=nil){
                this.controller.Get(request,response);
             }
@@ -303,6 +347,10 @@ use Regexp;
             var params = this.processParams(this.route,path);          
             var request = new Request(req,arg,params);
             var response = new Response(req, arg); 
+            if(!this.runMiddleWares(request,response)){
+                return;
+            }
+
             if(this.controller!=nil){
                this.controller.Post(request,response);
             }
@@ -314,6 +362,11 @@ use Regexp;
             var params = this.processParams(this.route,path);
             var request = new Request(req,arg,params);
             var response = new Response(req, arg); 
+            
+            if(!this.runMiddleWares(request,response)){
+                return;
+            }
+
             if(this.controller!=nil){
                this.controller.Put(request,response);
             }
@@ -325,6 +378,10 @@ use Regexp;
             var params = this.processParams(this.route,path);
             var request = new Request(req,arg,params);
             var response = new Response(req, arg); 
+            if(!this.runMiddleWares(request,response)){
+                return;
+            }
+            
             if(this.controller!=nil){
                this.controller.Delete(request,response);
             }

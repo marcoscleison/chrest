@@ -22,6 +22,7 @@ module Main{
         }
     }
 
+    // this is a class data
     class MyData{
         var name:string;
         var email:string;
@@ -31,7 +32,7 @@ module Main{
             this.email=email;
         }
     }
-
+    // this is also a class data
     class MyJson{
         var verb:string;
         var msg:string;
@@ -54,7 +55,9 @@ module Main{
             var obj = new MyJson("", "");
             writeln("json post");
             //Sends obj as json
-            obj=req.InputJson(obj);
+            
+            obj = req.InputJson(obj);
+            
             res.SendJson(obj); 
         }
         proc Put(ref req:Request,ref res:Response){
@@ -72,10 +75,32 @@ module Main{
             obj=req.InputJson(obj);
             res.SendJson(obj); 
         }
+    }
 
 
+    class LogMiddleware:ChrestMiddleware{
+
+        proc handle(ref req:Request,ref res:Response):bool{
+
+            writeln("Middleware logging verb: ",req.getCommand());
+
+            return true;
+        }
 
     }
+
+    class BlockPostMiddleware:ChrestMiddleware{
+
+        proc handle(ref req:Request,ref res:Response):bool{
+            if(req.getCommand()=="POST"){
+                res.Send(403, "You cannot send post");
+                return false;
+            }
+            return true;
+        }
+
+    }
+
 
     proc main(){
 
@@ -92,6 +117,8 @@ module Main{
         srv.Routes().Put("/json", jsoncontroller);
         srv.Routes().Delete("/json", jsoncontroller);
         
+        srv.Routes().Middleware(new LogMiddleware());
+        srv.Routes().Middleware(new BlockPostMiddleware());
 
         //Listen loop
         srv.Listen();
