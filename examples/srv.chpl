@@ -34,17 +34,7 @@ module Main{
             this.email=email;
         }
     }
-    // this is also a class data
-    class MyJson{
-        var verb:string;
-        var msg:string;
-
-        proc MyJson(verb:string, msg:string){
-            this.verb=verb;
-            this.msg=msg;
-        }
-    }
-
+    
     class JsonController:ChrestController{
         proc Get(ref req:Request,ref res:Response){
             var obj = new MyData("Marcos", "marcoscleison@m.co");
@@ -54,32 +44,27 @@ module Main{
         }
 
         proc Post(ref req:Request,ref res:Response){
-            var obj = new MyJson("", "");
+            var obj = new MyData("", "");
             writeln("json post");
-            //Sends obj as json
-            
+            // Gets object from client    
             obj = req.InputJson(obj);
-            
+            // Send it backs
             res.SendJson(obj); 
         }
         proc Put(ref req:Request,ref res:Response){
-            var obj = new MyJson("", "");
-            writeln("json put");
+           var obj = new MyData("", "");
+            writeln("json post");
             //Sends obj as json
-            obj=req.InputJson(obj);
+            // Gets object from client  
+            obj = req.InputJson(obj);
+             // Send it backs
             res.SendJson(obj); 
         }
 
-        proc Delete(ref req:Request,ref res:Response){
-            var obj = new MyJson("", "");
-            writeln("json delete");
-            //Sends obj as json
-            obj=req.InputJson(obj);
-            res.SendJson(obj); 
-        }
+        
     }
 
-
+//This is only a middleware that intercepts all Requests and write out in the terminal
     class LogMiddleware:ChrestMiddleware{
 
         proc handle(ref req:Request,ref res:Response):bool{
@@ -90,7 +75,7 @@ module Main{
         }
 
     }
-
+// This is another middleware example which blocks Post requests
     class BlockPostMiddleware:ChrestMiddleware{
 
         proc handle(ref req:Request,ref res:Response):bool{
@@ -111,14 +96,14 @@ module Main{
         //Regiser Get urls
         srv.Routes().Get("/",new HelloController());
         srv.Routes().Get("/teste/:id/:name",new TestController());
-        
+        // Controller
         var jsoncontroller = new JsonController();
-        
+
+        //Register routers
         srv.Routes().Get("/json", jsoncontroller);
         srv.Routes().Post("/json", jsoncontroller);
         srv.Routes().Put("/json", jsoncontroller);
-        srv.Routes().Delete("/json", jsoncontroller);
-        
+         //Add some middleware // Optional
         srv.Routes().Middleware(new LogMiddleware());
         ///srv.Routes().Middleware(new BlockPostMiddleware());
 
@@ -126,6 +111,7 @@ module Main{
         srv.Listen();
         //Closes connection
         srv.Close();
+        //The end
         writeln("Fim");
     }
 }

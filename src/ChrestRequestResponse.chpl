@@ -121,8 +121,9 @@ Parses the body of POST,PUT etc. requests
             return obj;
 
         }catch{
-            writeln("Cannot parse json");
-            writeln("body content ", this.bodyData);
+            writeln("Cannot parse JSon Request");
+            writeln("body content ");
+            writeln(this.bodyData);
             return obj;
         }
     }

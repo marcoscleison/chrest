@@ -26,6 +26,9 @@ module httpev
 
   extern "struct event_base" record event_base{};
   extern "struct evhttp" record evhttp{};
+  extern "struct evhttp_connection" record evhttp_connection{}
+  extern "struct evdns_base" record evdns_base{}
+
   extern "struct evbuffer" record evbuffer{};
   extern "struct evkeyvalq" record evkeyvalq{
 
@@ -88,8 +91,8 @@ extern proc evhttp_request_get_output_headers(req
 
 extern proc evhttp_request_get_command(const req
                                        : c_ptr(evhttp_request)) : c_int;
-extern proc evhttp_request_get_input_buffer(req
-                                            : c_ptr(evhttp_request)) : c_ptr(evbuffer);
+extern proc evhttp_request_get_input_buffer(req: c_ptr(evhttp_request)) : c_ptr(evbuffer);
+extern proc evhttp_request_get_output_buffer(req: c_ptr(evhttp_request)) : c_ptr(evbuffer);
 extern proc evbuffer_copyout(buf
                              : c_ptr(evbuffer), data_out
                              : c_ptr(uint(8)), datlen
@@ -141,9 +144,17 @@ type uint16_t = c_ushort;
 extern proc  event_init():c_ptr(event_base);
 extern proc  event_dispatch():c_int;
 extern proc  evhttp_start( address: c_string, port: uint16_t ):c_ptr(evhttp);
-//extern proc evhttp_connection_get_base( evcon:c_ptr(evhttp_connection),address:c_ptr(c_ptr(c_char)), port:c_ptr(c_short));
+extern proc evhttp_connection_get_base( evcon:c_ptr(evhttp_connection),address:c_ptr(c_ptr(c_char)), port:c_ptr(c_short));
 
+extern proc evhttp_connection_base_new( base:c_ptr(event_base),  dnsbase, address:c_string, port:c_ushort):c_ptr(evhttp_connection);
 
+//extern proc	evhttp_request_get_input_buffer (req:c_ptr(evhttp_request)):c_ptr(evbuffer);
+
+ extern proc evhttp_request_new (cb:c_fn_ptr, arg:c_void_ptr):c_ptr(evhttp_request);
+
+ extern proc 	evhttp_make_request (evcon:c_ptr(evhttp_connection),req:c_ptr(evhttp_request), _type:c_short, uri:c_string):c_int;
+
+extern proc  evbuffer_add_buffer(buffer, srcBuffer):c_int;
 //extern proc  evhttp_set_gencb(http:c_ptr(evhttp), cb:c_fn_ptr , arg: c_void_ptr ):c_void_ptr;
 /*
 extern proc  evbuffer_new():c_ptr(evbuffer );
