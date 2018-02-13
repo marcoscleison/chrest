@@ -5,24 +5,19 @@ use Random;
 use Utils;
 use SysCTypes;
 
-var responsesDom:domain(string);
-var clientResponses:[responsesDom]ClientResponse;
+
 //Callback router for the responses
 proc response_cb(req:c_ptr(evhttp_request), arg:c_void_ptr){
-    var path = getPath(req);
-    if(responsesDom.member(path)){
-        if(clientResponses[path]!=nil){
-            var cliResponse = clientResponses[path];
-          
+    var request = arg:ClientRequest;
+
+    if((request!=nil) && (req!=nil)){
             var buffer = evbuffer_new ();
             var srcBuffer = evhttp_request_get_input_buffer(req);
-            
             evbuffer_add_buffer(buffer, srcBuffer);
-
-            cliResponse(req,buffer);
+            request.OnResponse(req,buffer);
         }
 
-    }
+    
 
    
 }
@@ -87,14 +82,16 @@ class ClientRequest{
     var client:ChrestClient;
     var verb:string;
     var path:string;
-    var response:ClientResponse;
+  
     var  headers:c_ptr(evkeyvalq);
     var req:c_ptr(evhttp_request);
     var buffer:c_ptr(evbuffer);
+    var response:ClientResponse=nil;
 
     proc ClientRequest(){
         this.response=new ClientResponse();
-        this.req = evhttp_request_new(c_ptrTo(response_cb), c_nil);
+
+        this.req = evhttp_request_new(c_ptrTo(response_cb), this:c_void_ptr);
         this.headers = evhttp_request_get_output_headers(this.req);
         this.buffer= evhttp_request_get_output_buffer(this.req);
     }
@@ -104,8 +101,8 @@ class ClientRequest{
         this.verb=verb;
         this.path=path;
         this.response=new ClientResponse();
-        clientResponses[this.path]=this.response;
-        this.req = evhttp_request_new(c_ptrTo(response_cb), c_nil);
+        
+        this.req = evhttp_request_new(c_ptrTo(response_cb), this:c_void_ptr);
         this.headers = evhttp_request_get_output_headers(this.req);
         this.buffer= evhttp_request_get_output_buffer(this.req);
 
@@ -118,7 +115,7 @@ class ClientRequest{
         if(this.response==nil){
             this.response=new ClientResponse();
         }
-        clientResponses[this.path]=this.response;
+        
     }
 
     proc verbToConstant(verb:string):c_short{
@@ -162,18 +159,26 @@ class ClientRequest{
     proc addParams(header_name:string, header_value:string){
 
     }
+
+    proc OnResponse(req:c_ptr(evhttp_request),buffer:c_ptr(evbuffer)){
+        if(this.response==nil){
+            this.response = new ClientResponse();
+        }
+        this.response(req,buffer);
+    }
     
     //Sends the requests and returns the response object
     proc this():ClientResponse{
         this.Send();
-        return clientResponses[this.path];
+        
+        return this.response;
     }
 
 //Sends object as Json and returns the response object
     proc this(obj:?eltType):ClientResponse{
         this.Write(obj);  
         this.Send();
-        return clientResponses[this.path];
+        return this.response;
     } 
 
     proc Write(str ...?vparams){
@@ -212,7 +217,7 @@ class ClientRequest{
     }
     
     proc getResponse():ClientRequest{
-        return clientResponses[this.path];
+        return this.response;
     }
 
 }
@@ -222,6 +227,7 @@ class ChrestClient{
     var host:string;
     var port:int=80;
     var con:c_ptr(evhttp_connection);
+    
 
     proc ChrestClient(host:string, port:int){
         this.host = host;
