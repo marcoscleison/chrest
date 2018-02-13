@@ -23,6 +23,7 @@ module Main{
         var obj2 = new MyData("Chapel","teste@teste.co");
         // makes POST request sending obj as json to /json uri
         var res = cli.Get("/");
+
         //Reads response body as string
         var content:string = res();
         writeln("Content Get: ",content);
@@ -41,6 +42,11 @@ module Main{
 
         writeln("Content POST Name: ",responseObj2.name);
         writeln("Content POST Email: ",responseObj2.email);
+
+        var res4 = cli.Patch("/");
+
+        writeln("Content Patch",res3());
+
         
     } 
 }

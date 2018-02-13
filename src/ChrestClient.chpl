@@ -135,6 +135,9 @@ class ClientRequest{
         if(verb=="DELETE"||verb=="delete"){
             return EVHTTP_REQ_DELETE;
         }
+        if(verb=="CONNECT"||verb==" connect"){
+            return EVHTTP_REQ_CONNECT;
+        }
         if(verb=="HEAD"||verb=="head"){
             return EVHTTP_REQ_HEAD;
         }
@@ -144,8 +147,8 @@ class ClientRequest{
         if(verb=="TRACE"||verb=="TRACE"){
             return EVHTTP_REQ_TRACE;
         }
-        if(verb=="TRACE"||verb=="TRACE"){
-            return EVHTTP_REQ_TRACE;
+        if(verb=="PATCH"||verb=="patch"){
+            return EVHTTP_REQ_PATCH;
         }
 
         return 0:c_short;
@@ -296,8 +299,171 @@ class ChrestClient{
         var res = req(obj);
         return res;
     }
+    proc Delete(path:string){
+        var req = new ClientRequest(this,"DELETE",path);
+        return req();
+    }
+    proc Delete(path:string, _req:ClientRequest){
+        var req:ClientRequest;
+        if(_req==nil){
+         req = new ClientRequest(this,"DELETE",path);
+        }else{
+            req= _req;
+        }
+        req.configure(this,"DELETE",path);
+        var res = req();
+        return res;
+    }
+     // makes Delete call send obj as json
+    proc Delete(path:string, obj:?eltType, _req:ClientRequest=nil){
+        var req:ClientRequest;
+        if(_req==nil){
+         req = new ClientRequest(this,"DELETE",path);
+        }else{
+            req= _req;
+        }
+        req.configure(this,"DELETE",path);
+        var res = req(obj);
+        return res;
+    }
+    proc Connect(path:string){
+        var req = new ClientRequest(this,"CONNECT",path);
+        return req();
+    }
+    proc Connect(path:string, _req:ClientRequest){
+        var req:ClientRequest;
+        if(_req==nil){
+         req = new ClientRequest(this,"CONNECT",path);
+        }else{
+            req= _req;
+        }
+        req.configure(this,"CONNECT",path);
+        var res = req();
+        return res;
+    }
+     // makes Connect call send obj as json
+    proc Connect(path:string, obj:?eltType, _req:ClientRequest=nil){
+        var req:ClientRequest;
+        if(_req==nil){
+         req = new ClientRequest(this,"CONNECT",path);
+        }else{
+            req= _req;
+        }
+        req.configure(this,"CONNECT",path);
+        var res = req(obj);
+        return res;
+    }
+    proc Options(path:string){
+        var req = new ClientRequest(this,"OPTIONS",path);
+        return req();
+    }
+    proc Options(path:string, _req:ClientRequest){
+        var req:ClientRequest;
+        if(_req==nil){
+         req = new ClientRequest(this,"OPTIONS",path);
+        }else{
+            req= _req;
+        }
+        req.configure(this,"OPTIONS",path);
+        var res = req();
+        return res;
+    }
+     // makes Options call send obj as json
+    proc Options(path:string, obj:?eltType, _req:ClientRequest=nil){
+        var req:ClientRequest;
+        if(_req==nil){
+         req = new ClientRequest(this,"OPTIONS",path);
+        }else{
+            req= _req;
+        }
+        req.configure(this,"OPTIONS",path);
+        var res = req(obj);
+        return res;
+    }
+    proc Trace(path:string){
+        var req = new ClientRequest(this,"TRACE",path);
+        return req();
+    }
+    proc Trace(path:string, _req:ClientRequest){
+        var req:ClientRequest;
+        if(_req==nil){
+         req = new ClientRequest(this,"TRACE",path);
+        }else{
+            req= _req;
+        }
+        req.configure(this,"TRACE",path);
+        var res = req();
+        return res;
+    }
+     // makes Trace call send obj as json
+    proc Trace(path:string, obj:?eltType, _req:ClientRequest=nil){
+        var req:ClientRequest;
+        if(_req==nil){
+         req = new ClientRequest(this,"TRACE",path);
+        }else{
+            req= _req;
+        }
+        req.configure(this,"TRACE",path);
+        var res = req(obj);
+        return res;
+    }
+    proc Head(path:string){
+        var req = new ClientRequest(this,"HEAD",path);
+        return req();
+    }
+    proc Head(path:string, _req:ClientRequest){
+        var req:ClientRequest;
+        if(_req==nil){
+         req = new ClientRequest(this,"HEAD",path);
+        }else{
+            req= _req;
+        }
+        req.configure(this,"HEAD",path);
+        var res = req();
+        return res;
+    }
+     // makes Head call send obj as json
+    proc Head(path:string, obj:?eltType, _req:ClientRequest=nil){
+        var req:ClientRequest;
+        if(_req==nil){
+         req = new ClientRequest(this,"HEAD",path);
+        }else{
+            req= _req;
+        }
+        req.configure(this,"HEAD",path);
+        var res = req(obj);
+        return res;
+    }
+    proc Patch(path:string){
+        var req = new ClientRequest(this,"PATCH",path);
+        return req();
+    }
+    proc Patch(path:string, _req:ClientRequest){
+        var req:ClientRequest;
+        if(_req==nil){
+         req = new ClientRequest(this,"PATCH",path);
+        }else{
+            req= _req;
+        }
+        req.configure(this,"PATCH",path);
+        var res = req();
+        return res;
+    }
+     // makes Patch call send obj as json
+    proc Patch(path:string, obj:?eltType, _req:ClientRequest=nil){
+        var req:ClientRequest;
+        if(_req==nil){
+         req = new ClientRequest(this,"PATCH",path);
+        }else{
+            req= _req;
+        }
+        req.configure(this,"PATCH",path);
+        var res = req(obj);
+        return res;
+    }
 
-    proc Dispatch(){
+   
+   proc Dispatch(){
         event_base_dispatch(this.ebase);
     }
  }
