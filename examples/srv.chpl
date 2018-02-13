@@ -5,10 +5,41 @@ module Main{
     class HelloController:ChrestController{
         proc Get(ref req:Request,ref res:Response){
             //This wites to the response.
-            res.Write("Hello world");
-            //this sends the content to browser
-            //you do not need this; Now router do the work.
-            //res.Send(); 
+            res.Write("Hello from ",req.getCommand());
+         
+        }
+        proc Post(ref req:Request, ref res:Response){
+                //This wites to the response.
+            res.Write("Hello from ",req.getCommand());
+        }
+        proc Put(ref req:Request, ref res:Response){
+                //This wites to the response.
+            res.Write("Hello from ",req.getCommand());
+        }
+        proc Delete(ref req:Request, ref res:Response){
+                //This wites to the response.
+            res.Write("Hello from ",req.getCommand());
+        }
+        proc Head(ref req:Request, ref res:Response){
+                //This wites to the response.
+            res.Write("Hello from ",req.getCommand());
+        }
+        proc Options(ref req:Request, ref res:Response){
+                //This wites to the response.
+            res.Write("Hello from ",req.getCommand());
+        }
+        proc Trace(ref req:Request, ref res:Response){
+                //This wites to the response.
+            res.Write("Hello from ",req.getCommand());
+        }
+        proc Connect(ref req:Request, ref res:Response){
+                //This wites to the response.
+            res.Write("Hello from ",req.getCommand());
+        }
+
+        proc Patch(ref req:Request, ref res:Response){
+                //This wites to the response.
+            res.Write("Hello from ",req.getCommand());
         }
     }
 
@@ -94,7 +125,19 @@ module Main{
         //Open the server
         var srv = new Chrest("127.0.0.1",8080);
         //Regiser Get urls
-        srv.Routes().Get("/",new HelloController());
+        
+        var helloController = new HelloController();
+
+        srv.Routes().Get("/",helloController);
+        srv.Routes().Post("/",helloController);
+        srv.Routes().Put("/",helloController);
+        srv.Routes().Delete("/",helloController);
+        srv.Routes().Head("/",helloController);
+        srv.Routes().Connect("/",helloController);
+        srv.Routes().Options("/",helloController);
+        srv.Routes().Trace("/",helloController);
+        srv.Routes().Patch("/",helloController);
+                
         srv.Routes().Get("/teste/:id/:name",new TestController());
         // Controller
         var jsoncontroller = new JsonController();

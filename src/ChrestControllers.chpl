@@ -19,8 +19,6 @@ module ChrestControllers{
     class ChrestController
     {
         proc Get(ref req:Request, ref res:Response){
-            writeln("Base");
-            res.Send();
         }
         proc Post(ref req:Request, ref res:Response){
             

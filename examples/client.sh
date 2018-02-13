@@ -12,3 +12,4 @@ curl -i \
     -X PUT -d '{"verb":"put","msg":"this is a test for put"}'\
      http://localhost:8080/json
 
+

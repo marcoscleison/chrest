@@ -48,8 +48,8 @@ module ChrestMiddlewares{
     
         if err != ENOERR then ioerror(err, "in Opening Current Server Public Path.");
 
-        this.ROOT_PATH=cwds+"/"+public_dir;
-        this.public_dir=public_dir;
+        this.ROOT_PATH = cwds+"/"+public_dir;
+        this.public_dir = public_dir;
     }
     proc handle(ref req:Request, ref res:Response){
       if(req.getCommand()=="GET"){
@@ -99,8 +99,4 @@ module ChrestMiddlewares{
       return content;
      }
     }
-
-
-
-
 }

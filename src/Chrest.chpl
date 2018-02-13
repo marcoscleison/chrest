@@ -37,53 +37,18 @@ module Chrest
     var chrstServerDomain : domain(int);
     var chrstServers : [chrstServerDomain] Chrest;
 
-    proc generic_request_handler(req
-                                 : c_ptr(evhttp_request),
-                                   arg
-                                 : c_void_ptr)
-    {
-        var returnbuffer = evbuffer_new();
-
-        // var connection = evhttp_request_get_connection(req);
-
-        //var base = evhttp_connection_get_base(connection,);
-
-        //const char * 	evhttp_request_get_uri (const struct evhttp_request *req)
-        //struct evhttp_uri * 	evhttp_uri_parse (const char *source_uri)
-        //int evhttp_uri_get_port 	( 	const struct evhttp_uri *  	uri	)
-        //const char* evhttp_uri_get_host 	( 	const struct evhttp_uri *  	uri	)
-
-        /*evbuffer_add_printf(returnbuffer, "%s", "Thanks for the request from Chapel libevent 2!".localize().c_str());
-        evhttp_send_reply(req, HTTP_OK, "Client".localize().c_str(), returnbuffer);
-        evbuffer_free(returnbuffer);
-        begin writeln("Response 1");
-        begin writeln("Response 2");
-        begin writeln("Response 3");*/
-        return;
-    }
-
     proc _gloablHandler(req
                         : c_ptr(evhttp_request), arg
                         : c_void_ptr)
     {
         var host : string = Helpers.getEvRequestHost(req);
         var port : string = Helpers.getEvRequestPort(req);
-
         var serverkey = new string(arg:c_string);
-        
         writeln("Server Key = ", arg:int);
-        
         var srv_ptr:c_ptr(Chrest) = arg:c_ptr(Chrest);
         var srv : Chrest = srv_ptr.deref();
-        
-        /*if (chrstServerDomain.member( arg:int))
-        {
-            writeln(" sending request");
-            var srv : Chrest = chrstServers[ arg:int];
-            srv._handler(req, arg);
-        }*/
-          srv  = chrstServers[ arg:int];
-            srv._handler(req, arg);
+        srv  = chrstServers[ arg:int];
+        srv._handler(req, arg);
         return;
     }
 
@@ -103,22 +68,14 @@ module Chrest
             this.addr = addr;
             this.port = port;
             this.routes = new Router(this);
-
-
             var ptr:c_ptr(Chrest) = c_ptrTo(this);
-
-            writeln("id =", ptr:int);
-
             var serverkey : string = this.addr + ":" + this.port : string;
             this.ebase = event_base_new();
             this.server = evhttp_new(this.ebase);
-            evhttp_set_allowed_methods(this.server, EVHTTP_REQ_GET | EVHTTP_REQ_POST | EVHTTP_REQ_CONNECT | EVHTTP_REQ_HEAD | EVHTTP_REQ_OPTIONS | EVHTTP_REQ_PUT | EVHTTP_REQ_TRACE| EVHTTP_REQ_DELETE);
-
+            evhttp_set_allowed_methods(this.server, EVHTTP_REQ_GET | EVHTTP_REQ_POST | EVHTTP_REQ_CONNECT | EVHTTP_REQ_HEAD | EVHTTP_REQ_OPTIONS | EVHTTP_REQ_PUT | EVHTTP_REQ_TRACE| EVHTTP_REQ_DELETE|EVHTTP_REQ_PATCH);
             evhttp_set_gencb(this.server, c_ptrTo(_gloablHandler), ptr: c_void_ptr);
-
             chrstServers[ptr:int] = this;   
-
-            writeln("Creating server ", serverkey);
+            //writeln("Creating server ", serverkey);
         }
 
         proc Routes():Router{
@@ -129,7 +86,7 @@ module Chrest
         {
             if (evhttp_bind_socket(this.server, this.addr.localize().c_str(), this.port) != 0)
             {
-                writeln("Could not bind");
+                writeln("Could not bind.");
             }
         }
 
@@ -155,24 +112,9 @@ module Chrest
 
 
 
-    /*
+/*
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++==
 */
-
-    proc _Handler(req
-                  : c_ptr(evhttp_request), arg
-                  : c_void_ptr)
-    {
-        var returnbuffer = evbuffer_new();
-        evbuffer_add_printf(returnbuffer, "%s", "Thanks for the request from Chapel libevent 2!".localize().c_str());
-        evhttp_send_reply(req, HTTP_OK, "Client".localize().c_str(), returnbuffer);
-        evbuffer_free(returnbuffer);
-        begin writeln("H Response 1");
-        begin writeln("H Response 2");
-        begin writeln("H Response 3");
-        return;
-    }
-
     module Helpers
     {
 
@@ -187,14 +129,9 @@ module Chrest
                               : c_ptr(evhttp_request)) : string
         {
 
-            //const char * 	evhttp_request_get_uri (const struct evhttp_request *req)
-            //struct evhttp_uri * 	evhttp_uri_parse (const char *source_uri)
-            //int evhttp_uri_get_port 	( 	const struct evhttp_uri *  	uri	)
-            //const char* evhttp_uri_get_host 	( 	const struct evhttp_uri *  	uri	)
-
             var uri_str = evhttp_request_get_uri(req);
             var s = new string(uri_str);
-            writeln("uri_str = ",s);
+            //writeln("uri_str = ",s);
             var uri = evhttp_uri_parse(uri_str);
             var port : int = evhttp_uri_get_port(uri) : int;
             return "" + port;
@@ -207,6 +144,7 @@ module Chrest
                 when EVHTTP_REQ_GET do return "GET";
                 when EVHTTP_REQ_POST do return "POST";
                 when EVHTTP_REQ_PUT do return "PUT";
+                when EVHTTP_REQ_DELETE do return "DELETE";
                 when EVHTTP_REQ_HEAD do return "HEAD";
                 when EVHTTP_REQ_OPTIONS do return "OPTIONS";
                 when EVHTTP_REQ_TRACE do return "TRACE";

@@ -51,8 +51,6 @@ use Path;
             this.paramsDomain = D;
             this.url_params = params;
             
-            
-
             this.buffer = evhttp_request_get_input_buffer(this.req);
             this.uriStr = new string( evhttp_request_get_uri(this.req));
             this.uri =  evhttp_uri_parse_with_flags(this.uriStr.localize().c_str(),0);
@@ -66,6 +64,24 @@ use Path;
             }
 
             if(this.getCommand()=="PUT"){
+                this.ParseBody();
+            }
+            if(this.getCommand()=="DELETE"){
+                this.ParseBody();
+            }
+            if(this.getCommand()=="CONNECT"){
+                this.ParseBody();
+            }
+            if(this.getCommand()=="HEAD"){
+                this.ParseBody();
+            }
+            if(this.getCommand()=="OPTIONS"){
+                this.ParseBody();
+            }
+            if(this.getCommand()=="TRACE"){
+                this.ParseBody();
+            }
+            if(this.getCommand()=="PATCH"){
                 this.ParseBody();
             }
 
@@ -248,6 +264,5 @@ TODO: Add options.
   } 
 
 }
-
 
 }

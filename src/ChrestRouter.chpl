@@ -43,6 +43,21 @@ use Regexp;
 
         var deleteRoutesDomain:domain(string);
         var deleteRoutes:[deleteRoutesDomain]RoutePattern;
+        
+        var connectRoutesDomain:domain(string);
+        var connectRoutes:[connectRoutesDomain]RoutePattern;
+        
+        var headRoutesDomain:domain(string);
+        var headRoutes:[headRoutesDomain]RoutePattern;
+        
+        var optionsRoutesDomain:domain(string);
+        var optionsRoutes:[optionsRoutesDomain]RoutePattern;
+        
+        var traceRoutesDomain:domain(string);
+        var traceRoutes:[traceRoutesDomain]RoutePattern;
+        
+        var patchRoutesDomain:domain(string);
+        var patchRoutes:[patchRoutesDomain]RoutePattern;
 
         proc Router(srv)
         {
@@ -72,6 +87,21 @@ use Regexp;
             }
             if(verb == "DELETE"){
                 this.processDeletePathPattern(path);
+            }
+            if(verb == "CONNECT"){
+                this.processConnectPathPattern(path);
+            }
+            if(verb == "HEAD"){
+                this.processHeadPathPattern(path);
+            }
+            if(verb == "OPTIONS"){
+                this.processOptionsPathPattern(path);
+            }
+            if(verb == "TRACE"){
+                this.processTracePathPattern(path);
+            }
+            if(verb == "PATCH"){
+                this.processTracePathPattern(path);
             }
 
         }
@@ -109,6 +139,41 @@ use Regexp;
             this.deleteRoutes[rp.getRegexPattern()] = rp;
         }
 
+        proc Connect(uri:string, controller:ChrestController)
+        {
+            var rp = new RoutePattern(uri,controller,this);
+            writeln("CONNECT: Registering uri ",uri," pattern ",rp.getRegexPattern());
+            this.connectRoutes[rp.getRegexPattern()] = rp;
+        }
+
+        proc Head(uri:string, controller:ChrestController)
+        {
+            var rp = new RoutePattern(uri,controller,this);
+            writeln("HEAD: Registering uri ",uri," pattern ",rp.getRegexPattern());
+            this.headRoutes[rp.getRegexPattern()] = rp;
+        }
+        
+        proc Options(uri:string, controller:ChrestController)
+        {
+            var rp = new RoutePattern(uri,controller,this);
+            writeln("OPTIONS: Registering uri ",uri," pattern ",rp.getRegexPattern());
+            this.optionsRoutes[rp.getRegexPattern()] = rp;
+        }
+
+        proc Trace(uri:string, controller:ChrestController)
+        {
+            var rp = new RoutePattern(uri,controller,this);
+            writeln("TRACE: Registering uri ",uri," pattern ",rp.getRegexPattern());
+            this.traceRoutes[rp.getRegexPattern()] = rp;
+        }
+       
+        proc Patch(uri:string, controller:ChrestController)
+        {
+            var rp = new RoutePattern(uri,controller,this);
+            writeln("patch: Registering uri ",uri," pattern ",rp.getRegexPattern());
+            this.traceRoutes[rp.getRegexPattern()] = rp;
+        }
+
         proc processGetPathPattern(path)
         {
             var found=false;
@@ -129,11 +194,6 @@ use Regexp;
                 
             }
 
-            /*writeln("Is match =",route.Matched(s));
-            var params = route.processUrl(s); 
-            for k in params.domain{
-                writeln("key = ",k," value = ",params[k]);
-            }*/
         }
 
         proc processPostPathPattern(path)
@@ -146,7 +206,7 @@ use Regexp;
                     found=true;
                     break;
                 }else{
-                    writeln("Not match path=", path);
+                    writeln("Not match path =", path);
                 }
             }
             if(!found){
@@ -205,10 +265,117 @@ use Regexp;
                 
             }
         }
+        proc processConnectPathPattern(path)
+        {
+            var found=false;
+            for idx in this.connectRoutesDomain{
+                var route = this.connectRoutes[idx];            
+                if(route.Matched(path)){
+                    route.CallConnectController(path, this.req, this.arg);
+                    found=true;
+                    break;
+                }else{
+                    writeln("Connect: Not match path=", path);
+                }
+            }
+            if(!found){
+                //Error controller
+                var response = new Response(this.req, this.arg);
+                response.E404();
+                
+            }
+        }
 
+        proc processHeadPathPattern(path)
+        {
+            var found=false;
+            for idx in this.headRoutesDomain{
+                var route = this.headRoutes[idx];            
+                if(route.Matched(path)){
+                    route.CallHeadController(path, this.req, this.arg);
+                    found=true;
+                    break;
+                }else{
+                    writeln("HEAD: Not match path=", path);
+                }
+            }
+            if(!found){
+                //Error controller
+                var response = new Response(this.req, this.arg);
+                response.E404();
+                
+            }
+        }
+
+        proc processOptionsPathPattern(path)
+        {
+            var found=false;
+            for idx in this.optionsRoutesDomain{
+                var route = this.optionsRoutes[idx];            
+                if(route.Matched(path)){
+                    route.CallOptionsController(path, this.req, this.arg);
+                    found=true;
+                    break;
+                }else{
+                    writeln("Options: Not match path=", path);
+                }
+            }
+            if(!found){
+                //Error controller
+                var response = new Response(this.req, this.arg);
+                response.E404();
+                
+            }
+        }
         
+        proc processTracePathPattern(path)
+        {
+            var found=false;
+            
+            for idx in this.traceRoutesDomain{
+                var route = this.traceRoutes[idx];            
+                if(route.Matched(path)){
+                    route.CallTraceController(path, this.req, this.arg);
+                    found=true;
+                    break;
+                }else{
+                    writeln("Trace: Not match path=", path);
+                }
+            }
 
-    }
+            if(!found){
+                //Error controller
+                var response = new Response(this.req, this.arg);
+                response.E404();   
+            }
+        }
+         proc processPatchPathPattern(path)
+        {
+            var found=false;
+            
+            for idx in this.patchRoutesDomain{
+                var route = this.patchRoutes[idx];            
+                if(route.Matched(path)){
+                    route.CallPatchController(path, this.req, this.arg);
+                    found=true;
+                    break;
+                }else{
+                    writeln("Patch: Not match path=", path);
+                }
+            }
+
+            if(!found){
+                //Error controller
+                var response = new Response(this.req, this.arg);
+                response.E404();   
+            }
+        }
+
+
+
+
+
+    }//class
 
 
 
@@ -399,100 +566,91 @@ use Regexp;
             }
         
         }
-    }
-
-/*proc Matched(rgx:string, url:string):bool{
-            try{
-                var match = this.r.search(url);
-                var sm = url[match];
-               // writeln("pattern ",this.pattern);
-               // writeln("matching ",url[match]);
-                var smm = sm + "/";
-                if (smm == url)
-                {
-                    return true;
-                }
-                if (sm == url)
-                {
-                    return true;
-                }
-                return false;
-            }catch{
-                writeln("Error to find url pattern");
+       
+        proc CallConnectController(path:string,req:c_ptr(evhttp_request), arg:c_void_ptr){
+                      
+            var params = this.processParams(this.route,path);
+            var request = new Request(req,arg,params);
+            var response = new Response(req, arg); 
+            if(!this.runMiddleWares(request,response)){
+                return;
             }
-            return false;
-
-        }*/
-
-
-proc patternToRegex(pattern:string):string{
-            var fragments:[{1..0}]string;
-            var allowedParamChars:string = "[a-zA-Z0-9\\_\\-]+";
-            var group:int = 1;
-
-            for part in pattern.split('/'){
-                if(part.startsWith(":")){
-                    var rgx ="(?P<"+group+">" + allowedParamChars + ")";
-                    fragments.push_back(rgx);
-                    group+=1;
-                }else{
-                    fragments.push_back(part);
-                }
+            
+            if(this.controller!=nil){
+               this.controller.Connect(request,response);
+            }
+            if(!response.isSent()){
+                response.Send();
+            }
+        
+        }
+        proc CallHeadController(path:string,req:c_ptr(evhttp_request), arg:c_void_ptr){
+                      
+            var params = this.processParams(this.route,path);
+            var request = new Request(req,arg,params);
+            var response = new Response(req, arg); 
+            if(!this.runMiddleWares(request,response)){
+                return;
+            }
+            
+            if(this.controller!=nil){
+               this.controller.Head(request,response);
             }
 
-            return "/".join(fragments);
+            if(!response.isSent()){
+                response.Send();
+            }
+        
         }
 
-
-
-proc routerTest(){
-
-
-    var purl="/user/:id/test";
-    var rgx = patternToRegex(purl);
-    
-    writeln(rgx);
-
-    var url = "/user/1/teste";
-
-/*
-    try{
-            var r:regexp = compile(rgx);
-            writeln(rgx);
-
-                var match = r.search(url);
-                var sm = url[match];
-               // writeln("pattern ",this.pattern);
-               // writeln("matching ",url[match]);
-                var smm = sm + "/";
-                if (smm == url)
-                {
-
-                    writeln("matched");
-                  var params = processParams(purl,smm);
-                                       
-                  for k in  params.domain{
-                      var v = params[k];
-                      writeln("k = ",k,"v = ", v);
-                  }
-                }
-                if (sm == url)
-                {
-                                        writeln("matched");
-
-                  var params = processParams(purl,sm);
-                  for k in  params.domain{
-                      var v = params[k];
-                      writeln("k = ",k,"v = ", v);
-                  }
-
-                }
-
-    }catch{
-         writeln("error");
+        proc CallOptionsController(path:string,req:c_ptr(evhttp_request), arg:c_void_ptr){
+                      
+            var params = this.processParams(this.route,path);
+            var request = new Request(req,arg,params);
+            var response = new Response(req, arg); 
+            if(!this.runMiddleWares(request,response)){
+                return;
+            }
+            
+            if(this.controller!=nil){
+               this.controller.Options(request,response);
+            }
+            
+            if(!response.isSent()){
+                response.Send();
+            }
+        
+        }
+        proc CallTraceController(path:string,req:c_ptr(evhttp_request), arg:c_void_ptr){
+                      
+            var params = this.processParams(this.route,path);
+            var request = new Request(req,arg,params);
+            var response = new Response(req, arg); 
+            if(!this.runMiddleWares(request,response)){
+                return;
+            }
+            if(this.controller!=nil){
+               this.controller.Trace(request,response);
+            }
+            if(!response.isSent()){
+                response.Send();
+            }
+        }
+        proc CallPatchController(path:string,req:c_ptr(evhttp_request), arg:c_void_ptr){
+                      
+            var params = this.processParams(this.route,path);
+            var request = new Request(req,arg,params);
+            var response = new Response(req, arg); 
+            if(!this.runMiddleWares(request,response)){
+                return;
+            }
+            if(this.controller!=nil){
+               this.controller.Patch(request,response);
+            }
+            if(!response.isSent()){
+                response.Send();
+            }
+        }
     }
-    */
-}
-
 
 }
