@@ -17,6 +17,7 @@ module Main{
     proc main(){
         // Creates Client
         var cli = new ChrestClient("127.0.0.1",8080);
+        
         // Creates objects to be sent
         var obj = new MyData("Marcos","marcos@teste.co");
         var obj2 = new MyData("Chapel","teste@teste.co");

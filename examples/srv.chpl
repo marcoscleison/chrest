@@ -124,6 +124,9 @@ module Main{
 
         //Open the server
         var srv = new Chrest("127.0.0.1",8080);
+        
+        //Creating another server in the port 8081
+        var srv2 = new Chrest("127.0.0.1",8081);
         //Regiser Get urls
         
         var helloController = new HelloController();
@@ -137,7 +140,12 @@ module Main{
         srv.Routes().Options("/",helloController);
         srv.Routes().Trace("/",helloController);
         srv.Routes().Patch("/",helloController);
-                
+        
+        srv2.Routes().Get("/",helloController);
+        srv2.Routes().Post("/",helloController);
+
+
+
         srv.Routes().Get("/teste/:id/:name",new TestController());
         // Controller
         var jsoncontroller = new JsonController();
@@ -150,10 +158,20 @@ module Main{
         srv.Routes().Middleware(new LogMiddleware());
         ///srv.Routes().Middleware(new BlockPostMiddleware());
 
-        //Listen loop
-        srv.Listen();
+        //Listen loop in parallel
+        cobegin{        
+            srv.Listen();
+            srv2.Listen();
+        }
+
+        writeln("closing");
+        
+        
         //Closes connection
-        srv.Close();
+        
+            srv.Close();
+            srv2.Close();
+        
         //The end
         writeln("Fim");
     }

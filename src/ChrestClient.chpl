@@ -129,8 +129,23 @@ class ClientRequest{
         if(verb=="POST"||verb=="post"){
             return EVHTTP_REQ_POST;
         }
-         if(verb=="PUT"||verb=="put"){
+        if(verb=="PUT"||verb=="put"){
             return EVHTTP_REQ_PUT;
+        }
+        if(verb=="DELETE"||verb=="delete"){
+            return EVHTTP_REQ_DELETE;
+        }
+        if(verb=="HEAD"||verb=="head"){
+            return EVHTTP_REQ_HEAD;
+        }
+        if(verb=="OPTIONS"||verb=="options"){
+            return EVHTTP_REQ_OPTIONS;
+        }
+        if(verb=="TRACE"||verb=="TRACE"){
+            return EVHTTP_REQ_TRACE;
+        }
+        if(verb=="TRACE"||verb=="TRACE"){
+            return EVHTTP_REQ_TRACE;
         }
 
         return 0:c_short;
@@ -188,7 +203,7 @@ class ClientRequest{
         this.AddHeader( "Host", this.client.host);
         this.AddHeader( "Connection", "close");
         this.AddHeader( "Accept","*/*"); 	
-        this.AddHeader( "User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36"); 	
+        this.AddHeader( "User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36 ChrestClient/0.0.1"); 	
         evhttp_make_request(this.client.con, this.req, this.verbToConstant(this.verb), this.path.localize().c_str());        
         this.client.Dispatch();
     }

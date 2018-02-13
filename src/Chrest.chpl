@@ -34,7 +34,7 @@ module Chrest
     use ChrestMiddlewares;
     use ChrestControllers;
 
-    var chrstServerDomain : domain(int);
+    var chrstServerDomain : domain(Chrest);
     var chrstServers : [chrstServerDomain] Chrest;
 
     proc _gloablHandler(req
@@ -43,11 +43,11 @@ module Chrest
     {
         var host : string = Helpers.getEvRequestHost(req);
         var port : string = Helpers.getEvRequestPort(req);
-        var serverkey = new string(arg:c_string);
-        writeln("Server Key = ", arg:int);
-        var srv_ptr:c_ptr(Chrest) = arg:c_ptr(Chrest);
-        var srv : Chrest = srv_ptr.deref();
-        srv  = chrstServers[ arg:int];
+        //var serverkey = new string(arg:c_string);
+        //writeln("Server Key = ", arg:int);
+        var srv_ptr = arg:Chrest;
+        //var srv : Chrest = srv_ptr.deref();
+        var srv  = srv_ptr; //chrstServers[srv];
         srv._handler(req, arg);
         return;
     }
@@ -73,8 +73,8 @@ module Chrest
             this.ebase = event_base_new();
             this.server = evhttp_new(this.ebase);
             evhttp_set_allowed_methods(this.server, EVHTTP_REQ_GET | EVHTTP_REQ_POST | EVHTTP_REQ_CONNECT | EVHTTP_REQ_HEAD | EVHTTP_REQ_OPTIONS | EVHTTP_REQ_PUT | EVHTTP_REQ_TRACE| EVHTTP_REQ_DELETE|EVHTTP_REQ_PATCH);
-            evhttp_set_gencb(this.server, c_ptrTo(_gloablHandler), ptr: c_void_ptr);
-            chrstServers[ptr:int] = this;   
+            evhttp_set_gencb(this.server, c_ptrTo(_gloablHandler), this: c_void_ptr);
+            //chrstServers[ptr:int] = this;   
             //writeln("Creating server ", serverkey);
         }
 
@@ -87,12 +87,14 @@ module Chrest
             if (evhttp_bind_socket(this.server, this.addr.localize().c_str(), this.port) != 0)
             {
                 writeln("Could not bind.");
+                return;
             }
+            event_base_dispatch(this.ebase);
         }
 
         proc Close()
         {
-            event_base_dispatch(this.ebase);
+            
             evhttp_free(this.server);
             event_base_free(this.ebase);
         }
