@@ -16,9 +16,6 @@ proc response_cb(req:c_ptr(evhttp_request), arg:c_void_ptr){
             evbuffer_add_buffer(buffer, srcBuffer);
             request.OnResponse(req,buffer);
         }
-
-    
-
    
 }
 

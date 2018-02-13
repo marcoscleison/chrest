@@ -156,6 +156,12 @@ module Main{
         srv.Routes().Put("/json", jsoncontroller);
          //Add some middleware // Optional
         srv.Routes().Middleware(new LogMiddleware());
+        
+        //srv.Routes().Middleware(new FileMiddleware("public")); //register file serrver
+
+
+
+
         ///srv.Routes().Middleware(new BlockPostMiddleware());
 
         //Listen loop in parallel

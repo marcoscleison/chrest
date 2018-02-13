@@ -22,7 +22,7 @@ module httpev
   require "event2/keyvalq_struct.h";
   require "event2/util.h";
   require "stdio.h";
-  require "chrest.h";
+  
 
   extern "struct event_base" record event_base{};
   extern "struct evhttp" record evhttp{};
@@ -38,12 +38,7 @@ module httpev
     var output_headers : c_ptr(evkeyvalq);
   };
   extern "struct evhttp_uri" record evhttp_uri{};
-  //Some C functions bindings.
-
-
-extern proc get_port_from_request():c_int;
-
-
+  
 
   extern proc event_base_new() : c_ptr(event_base);
   extern proc evhttp_new(base) : c_ptr(evhttp);

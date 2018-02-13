@@ -44,32 +44,58 @@ module ChrestMiddlewares{
 
         var err: syserr = ENOERR;
 
-        var cwds:string = ".";//locale.cwd(err);
+        var cwds:string =".";
     
+      try{
+       // cwds =locale.cwd(err);
         if err != ENOERR then ioerror(err, "in Opening Current Server Public Path.");
+
+      }catch{
+        writeln("Cannot to open path");
+      }
+        
 
         this.ROOT_PATH = cwds+"/"+public_dir;
         this.public_dir = public_dir;
     }
-    proc handle(ref req:Request, ref res:Response){
+    proc handle(ref req:Request, ref res:Response):bool{
+
+
+    
       if(req.getCommand()=="GET"){
-        this.processFile(req,res);
+         
+        return !this.processFile(req,res);
       }
+
+      return true;
     }
 
     proc processFile(ref req:Request, ref res:Response){
+
+      try{
        var uri= req.getUri();
+        writeln("Tring to load file", uri);
+
+
        var (isloadable,filepath) = this.GetLoadableFileName(uri);
        if(isloadable==true){
          var content = this.loadFileContent(filepath);
          res.Write(content);
-         //res.Send();
+         res.Send();
+         return true;
        }else{
-         res.E404("Url Or File Not Found");
+         //res.E404("Url Or File Not Found");
+         return false;
        }
+
+      }catch{
+        return false;
+      }
+      return false;
     }
 
     proc GetLoadableFileName(uri:string):(bool,string){
+      try{
       if(exists(this.ROOT_PATH+uri)){
         if(isDir(this.ROOT_PATH+uri)){
           if(isFile(this.ROOT_PATH+uri+"/index.html")){
@@ -85,18 +111,27 @@ module ChrestMiddlewares{
       }else{
         return (false,"");
       }
+        return (false,"");
+      }catch{
+        return (false,"");
+      }
       return (false,"");
     }
 
     proc loadFileContent(filepath:string):string{
       var content:string ="";
-
+      try{
       var f = open(filepath, iomode.r,
                  hints=IOHINT_RANDOM|IOHINT_CACHED|IOHINT_PARALLEL);
       for line in f.lines() {
          content+=line;
       }
-      return content;
+        return content;
+      }catch{
+        return "";
+      }
+      
      }
+
     }
 }
