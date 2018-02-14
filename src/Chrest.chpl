@@ -74,8 +74,7 @@ module Chrest
             this.server = evhttp_new(this.ebase);
             evhttp_set_allowed_methods(this.server, EVHTTP_REQ_GET | EVHTTP_REQ_POST | EVHTTP_REQ_CONNECT | EVHTTP_REQ_HEAD | EVHTTP_REQ_OPTIONS | EVHTTP_REQ_PUT | EVHTTP_REQ_TRACE| EVHTTP_REQ_DELETE|EVHTTP_REQ_PATCH);
             evhttp_set_gencb(this.server, c_ptrTo(_gloablHandler), this: c_void_ptr);
-            //chrstServers[ptr:int] = this;   
-            //writeln("Creating server ", serverkey);
+            
         }
 
         proc Routes():Router{

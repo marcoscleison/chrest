@@ -387,11 +387,6 @@ use Regexp;
         var pattern:string;
         var r:regexp;
         var controller:ChrestControllerInterface;
-
-
-        /*var req:c_ptr(evhttp_request)
-        var arg:c_void_ptr;
-        */
         proc RoutePattern(route:string, controller:ChrestController,router:Router){
            
             this.route = route;
@@ -434,8 +429,7 @@ use Regexp;
             try{
                 var match = this.r.search(url);
                 var sm = url[match];
-               // writeln("pattern ",this.pattern);
-               // writeln("matching ",url[match]);
+               
                 var smm = sm + "/";
                 if (smm == url)
                 {
@@ -468,7 +462,7 @@ use Regexp;
         for p in path.split("/"){
             pathPart.push_back(p);
         }
-        //writeln("len = ",pathPart.domain.size," ",urlPart.domain.size);
+       
         if(pathPart.domain.size != urlPart.domain.size){
             return ret;
         }
@@ -484,13 +478,15 @@ use Regexp;
 
     proc runMiddleWares(ref req:Request, ref res:Response):bool{
         var forward = true;
+        var i=0;
         for mdl in this.router.getMiddlewares(){
             forward = forward & mdl.handle(req,res);
             if(!forward){
+                writeln("Middleware ",i," blocking the request");
                 break;
             }
         }
-        writeln("forward ",forward);
+        writeln("==================forward ",forward);
         return forward;
     }
 
