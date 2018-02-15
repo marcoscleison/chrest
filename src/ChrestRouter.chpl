@@ -180,9 +180,18 @@ use Regexp;
             for idx in this.getRoutesDomain{
                 var route = this.getRoutes[idx];            
                 if(route.Matched(path)){
-                    route.CallGetController(path, this.req, this.arg);
+
+                    var params = route.getUrlParams(path);
+                    var request = new Request(this.req,this.arg,params);
+                    var response = new Response(this.req, arg);
+                    if(!this.runMiddleWares(request,response)){
+                        return;
+                    }
+                    route.CallGetController(path, request, response);
+                    
                     found=true;
-                    break;
+                    
+                    return;
                 }else{
                     writeln("Not match path=", path);
                 }
@@ -202,7 +211,15 @@ use Regexp;
             for idx in this.postRoutesDomain{
                 var route = this.postRoutes[idx];            
                 if(route.Matched(path)){
-                    route.CallPostController(path, this.req, this.arg);
+
+                   var params = route.getUrlParams(path);
+                    var request = new Request(this.req,this.arg,params);
+                    var response = new Response(this.req, arg);
+                    if(!this.runMiddleWares(request,response)){
+                        return;
+                    }
+
+                    route.CallPostController(path, request, response);
                     found=true;
                     break;
                 }else{
@@ -224,7 +241,14 @@ use Regexp;
             for idx in this.putRoutesDomain{
                 var route = this.putRoutes[idx];            
                 if(route.Matched(path)){
-                    route.CallPutController(path, this.req, this.arg);
+                    var params = route.getUrlParams(path);
+                    var request = new Request(this.req,this.arg,params);
+                    var response = new Response(this.req, arg);
+                    if(!this.runMiddleWares(request,response)){
+                        return;
+                    }
+
+                    route.CallPutController(path, request, response);
                     found=true;
                     break;
                 }else{
@@ -251,7 +275,13 @@ use Regexp;
             for idx in this.deleteRoutesDomain{
                 var route = this.deleteRoutes[idx];            
                 if(route.Matched(path)){
-                    route.CallDeleteController(path, this.req, this.arg);
+                    var params = route.getUrlParams(path);
+                    var request = new Request(this.req,this.arg,params);
+                    var response = new Response(this.req, arg);
+                    if(!this.runMiddleWares(request,response)){
+                        return;
+                    }
+                    route.CallDeleteController(path, request, response);
                     found=true;
                     break;
                 }else{
@@ -271,7 +301,15 @@ use Regexp;
             for idx in this.connectRoutesDomain{
                 var route = this.connectRoutes[idx];            
                 if(route.Matched(path)){
-                    route.CallConnectController(path, this.req, this.arg);
+                    var params = route.getUrlParams(path);
+                    var request = new Request(this.req,this.arg,params);
+                    var response = new Response(this.req, arg);
+
+                    if(!this.runMiddleWares(request,response)){
+                        return;
+                    }
+
+                    route.CallConnectController(path, request, response);
                     found=true;
                     break;
                 }else{
@@ -292,7 +330,13 @@ use Regexp;
             for idx in this.headRoutesDomain{
                 var route = this.headRoutes[idx];            
                 if(route.Matched(path)){
-                    route.CallHeadController(path, this.req, this.arg);
+                    var params = route.getUrlParams(path);
+                    var request = new Request(this.req,this.arg,params);
+                    var response = new Response(this.req, arg);
+                    if(!this.runMiddleWares(request,response)){
+                        return;
+                    }
+                    route.CallHeadController(path, request, response);
                     found=true;
                     break;
                 }else{
@@ -313,7 +357,13 @@ use Regexp;
             for idx in this.optionsRoutesDomain{
                 var route = this.optionsRoutes[idx];            
                 if(route.Matched(path)){
-                    route.CallOptionsController(path, this.req, this.arg);
+                    var params = route.getUrlParams(path);
+                    var request = new Request(this.req,this.arg,params);
+                    var response = new Response(this.req, arg);
+                    if(!this.runMiddleWares(request,response)){
+                        return;
+                    }
+                    route.CallOptionsController(path, request, response);
                     found=true;
                     break;
                 }else{
@@ -335,11 +385,24 @@ use Regexp;
             for idx in this.traceRoutesDomain{
                 var route = this.traceRoutes[idx];            
                 if(route.Matched(path)){
-                    route.CallTraceController(path, this.req, this.arg);
+                    var params = route.getUrlParams(path);
+                    var request = new Request(this.req,this.arg,params);
+                    var response = new Response(this.req, arg);
+                    if(!this.runMiddleWares(request,response)){
+                        return;
+                    }
+                    route.CallTraceController(path, request, response);
                     found=true;
                     break;
                 }else{
                     writeln("Trace: Not match path=", path);
+                    var params = route.getUrlParams(path);
+                    var request = new Request(this.req,this.arg,params);
+                    var response = new Response(this.req, arg);
+                    
+                    if(!this.runMiddleWares(request,response)){
+                        return;
+                    }
                 }
             }
 
@@ -356,7 +419,13 @@ use Regexp;
             for idx in this.patchRoutesDomain{
                 var route = this.patchRoutes[idx];            
                 if(route.Matched(path)){
-                    route.CallPatchController(path, this.req, this.arg);
+                    var params = route.getUrlParams(path);
+                    var request = new Request(this.req,this.arg,params);
+                    var response = new Response(this.req, arg);
+                    if(!this.runMiddleWares(request,response)){
+                        return;
+                    }
+                    route.CallPatchController(path, request, response);
                     found=true;
                     break;
                 }else{
@@ -370,6 +439,20 @@ use Regexp;
                 response.E404();   
             }
         }
+
+        proc runMiddleWares(ref req:Request, ref res:Response):bool{
+        var forward = true;
+        var i=0;
+        for mdl in this.getMiddlewares(){
+            forward = forward & mdl.handle(req,res);
+            if(!forward){
+                writeln("Middleware ",i," blocking the request");
+                break;
+            }
+        }
+        writeln("==================forward ",forward);
+        return forward;
+    }
 
 
 
@@ -387,6 +470,7 @@ use Regexp;
         var pattern:string;
         var r:regexp;
         var controller:ChrestControllerInterface;
+        var middlewares:[{1..0}]ChrestMiddlewareInterface;
         proc RoutePattern(route:string, controller:ChrestController,router:Router){
            
             this.route = route;
@@ -448,6 +532,10 @@ use Regexp;
 
         }
 
+        proc getUrlParams(path:string){
+            return this.processParams(this.route,path);
+        }
+
     proc processParams(url:string,path:string){
 
         var urlPart:[{1..0}]string;
@@ -475,11 +563,14 @@ use Regexp;
         }
         return ret;
     }
+    proc getMiddlewares(){
+        return this.middlewares;
+    }
 
     proc runMiddleWares(ref req:Request, ref res:Response):bool{
         var forward = true;
         var i=0;
-        for mdl in this.router.getMiddlewares(){
+        for mdl in this.getMiddlewares(){
             forward = forward & mdl.handle(req,res);
             if(!forward){
                 writeln("Middleware ",i," blocking the request");
@@ -491,10 +582,8 @@ use Regexp;
     }
 
 
-    proc CallGetController(path:string,req:c_ptr(evhttp_request), arg:c_void_ptr){           
-            var params = this.processParams(this.route,path);
-            var request = new Request(req,arg,params);
-            var response = new Response(req, arg);
+    proc CallGetController(path:string,ref request:Request, ref response:Response){           
+            
             if(!this.runMiddleWares(request,response)){
                 return;
             }
@@ -508,11 +597,8 @@ use Regexp;
         
         }
                 
-        proc CallPostController(path:string,req:c_ptr(evhttp_request), arg:c_void_ptr){
-                    
-            var params = this.processParams(this.route,path);          
-            var request = new Request(req,arg,params);
-            var response = new Response(req, arg); 
+        proc CallPostController(path:string,ref request:Request, ref response:Response){
+                     
             if(!this.runMiddleWares(request,response)){
                 return;
             }
@@ -526,11 +612,7 @@ use Regexp;
         
         }
         
-        proc CallPutController(path:string,req:c_ptr(evhttp_request), arg:c_void_ptr){
-                      
-            var params = this.processParams(this.route,path);
-            var request = new Request(req,arg,params);
-            var response = new Response(req, arg); 
+        proc CallPutController(path:string,ref request:Request, ref response:Response){
             
             if(!this.runMiddleWares(request,response)){
                 return;
@@ -545,11 +627,9 @@ use Regexp;
         
         }
         
-        proc CallDeleteController(path:string,req:c_ptr(evhttp_request), arg:c_void_ptr){
+        proc CallDeleteController(path:string,ref request:Request, ref response:Response){
                       
-            var params = this.processParams(this.route,path);
-            var request = new Request(req,arg,params);
-            var response = new Response(req, arg); 
+            
             if(!this.runMiddleWares(request,response)){
                 return;
             }
@@ -563,11 +643,9 @@ use Regexp;
         
         }
        
-        proc CallConnectController(path:string,req:c_ptr(evhttp_request), arg:c_void_ptr){
+        proc CallConnectController(path:string,ref request:Request, ref response:Response){
                       
-            var params = this.processParams(this.route,path);
-            var request = new Request(req,arg,params);
-            var response = new Response(req, arg); 
+           
             if(!this.runMiddleWares(request,response)){
                 return;
             }
@@ -580,11 +658,9 @@ use Regexp;
             }
         
         }
-        proc CallHeadController(path:string,req:c_ptr(evhttp_request), arg:c_void_ptr){
+        proc CallHeadController(path:string,ref request:Request, ref response:Response){
                       
-            var params = this.processParams(this.route,path);
-            var request = new Request(req,arg,params);
-            var response = new Response(req, arg); 
+            
             if(!this.runMiddleWares(request,response)){
                 return;
             }
@@ -599,11 +675,9 @@ use Regexp;
         
         }
 
-        proc CallOptionsController(path:string,req:c_ptr(evhttp_request), arg:c_void_ptr){
+        proc CallOptionsController(path:string,ref request:Request, ref response:Response){
                       
-            var params = this.processParams(this.route,path);
-            var request = new Request(req,arg,params);
-            var response = new Response(req, arg); 
+            
             if(!this.runMiddleWares(request,response)){
                 return;
             }
@@ -617,11 +691,9 @@ use Regexp;
             }
         
         }
-        proc CallTraceController(path:string,req:c_ptr(evhttp_request), arg:c_void_ptr){
+        proc CallTraceController(path:string,ref request:Request, ref response:Response){
                       
-            var params = this.processParams(this.route,path);
-            var request = new Request(req,arg,params);
-            var response = new Response(req, arg); 
+            
             if(!this.runMiddleWares(request,response)){
                 return;
             }
@@ -632,11 +704,7 @@ use Regexp;
                 response.Send();
             }
         }
-        proc CallPatchController(path:string,req:c_ptr(evhttp_request), arg:c_void_ptr){
-                      
-            var params = this.processParams(this.route,path);
-            var request = new Request(req,arg,params);
-            var response = new Response(req, arg); 
+        proc CallPatchController(path:string,ref request:Request, ref response:Response){
             if(!this.runMiddleWares(request,response)){
                 return;
             }

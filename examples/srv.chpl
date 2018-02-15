@@ -123,10 +123,10 @@ module Main{
     proc main(){
 
         //Open the server
-        var srv = new Chrest("127.0.0.1",8080);
+        var srv = new Chrest("127.0.0.1",8081);
         
         //Creating another server in the port 8081
-        var srv2 = new Chrest("127.0.0.1",8081);
+        var srv2 = new Chrest("127.0.0.1",8082);
         //Regiser Get urls
         
         var helloController = new HelloController();
