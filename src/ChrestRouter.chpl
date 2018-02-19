@@ -215,9 +215,9 @@ use Regexp;
                    var params = route.getUrlParams(path);
                     var request = new Request(this.req,this.arg,params);
                     var response = new Response(this.req, arg);
-                    if(!this.runMiddleWares(request,response)){
+                    /*if(!this.runMiddleWares(request,response)){
                         return;
-                    }
+                    }*/
 
                     route.CallPostController(path, request, response);
                     found=true;
@@ -599,16 +599,18 @@ use Regexp;
                 
         proc CallPostController(path:string,ref request:Request, ref response:Response){
                      
-            if(!this.runMiddleWares(request,response)){
+            /*if(!this.runMiddleWares(request,response)){
                 return;
-            }
+            }*/
+
+            writeln("Calling post");
 
             if(this.controller!=nil){
                this.controller.Post(request,response);
             }
-            if(!response.isSent()){
+            //if(!response.isSent()){
                 response.Send();
-            }
+           // }
         
         }
         

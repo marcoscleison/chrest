@@ -23,6 +23,8 @@ use IO.FormattedIO;
 use IO;
 use FileSystem;
 use Path;
+use Reflection;
+
     
 
   class Request{
@@ -125,23 +127,49 @@ Parses the body of POST,PUT etc. requests
         
         this.bodyData = dados;
 
+        writeln("Body =",this.bodyData);
+
         evhttp_parse_query_str(dados.localize().c_str(), this.params);
+        writeln("prams =",this.params);
+    }
+    proc InputObj(type eltType){
+        var obj = new eltType();
+        return this.InputJson(obj);
+    }
+    proc InputJson(type eltType){
+        var obj = new eltType();
+        return this.InputJson(obj);
     }
 
     proc InputJson(ref obj:?eltType){
-        try{
-            var mem = openmem();
-            var writer = mem.writer().write(this.bodyData);
-            var reader = mem.reader();
-            reader.readf("%jt", obj);
-            return obj;
 
-        }catch{
-            writeln("Cannot parse JSon Request");
-            writeln("body content ");
-            writeln(this.bodyData);
+        if(this.getCommand()=="GET"){
+            for param i in 1..numFields(eltType) {
+                var fname = getFieldName(eltType,i);
+                type ftype = getFieldRef(obj, i).type;
+                var s=this.Input(fname);
+                if(isNumericType(ftype)&&(s=="")){
+                    getFieldRef(obj, i)= 0:ftype;
+                }else{
+                    getFieldRef(obj, i)=s:ftype;
+                }
+            }
             return obj;
-        }
+        }else{
+            try{
+                var mem = openmem();
+                var writer = mem.writer().write(this.bodyData);
+                var reader = mem.reader();
+                reader.readf("%jt", obj);
+                return obj;
+
+            }catch{
+                writeln("Cannot parse JSon Request");
+                writeln("body content ");
+                writeln(this.bodyData);
+                return obj;
+            }
+      }
     }
 
     proc getUri():string{

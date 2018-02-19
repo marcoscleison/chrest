@@ -67,6 +67,7 @@ extern proc evhttp_send_reply(req, code
                               : c_ptr(evbuffer)) : void;
 extern proc evhttp_request_get_input_headers(req
                                              : c_ptr(evhttp_request)) : c_ptr(evkeyvalq);
+extern proc evhttp_request_get_response_code(req: c_ptr(evhttp_request));
 extern proc evhttp_find_header(const headers
                                : c_ptr(evkeyvalq), key
                                : c_string) : c_string;
@@ -113,6 +114,9 @@ extern proc  evhttp_uri_get_port(uri: c_ptr(evhttp_uri ) ):c_int;
 //extern proc  evhttp_uri_get_path(uri: c_ptr(evhttp_uri ) ):c_string;
 //extern proc  evhttp_uri_get_query(uri: c_ptr(evhttp_uri ) ):c_string;
 extern proc  evhttp_uri_get_fragment(uri: c_ptr(evhttp_uri ) ):c_string;
+
+extern proc  evhttp_uriencode (str:c_string, size, space_to_plus):c_string;
+
 
 //extern proc   evbuffer_free(buffer:c_ptr(evbuffer));
 

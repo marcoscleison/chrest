@@ -4,6 +4,9 @@ use SysCTypes;
 use Random;
 use Utils;
 use SysCTypes;
+use Types;
+use Reflection;
+use SysError;
 
 
 //Callback router for the responses
@@ -30,6 +33,20 @@ class ClientResponse{
     proc _setRequest(req:c_ptr(evhttp_request)){
         this.req=req;
     }
+
+    proc responseCode():int{
+        return evhttp_request_get_response_code(this.req):int;
+    }
+
+    proc responseOK():bool{
+        return (this.responseCode()==200) ||  (this.responseCode()==203);
+    }
+    
+    proc responseError():bool{
+        return (this.responseCode()>=400);
+    }
+
+
     // used by the callback router to get response, you cannot use this directly
     proc this(req:c_ptr(evhttp_request),buffer:c_ptr(evbuffer)){
         this._setRequest(req);
@@ -80,10 +97,22 @@ class ClientRequest{
     var verb:string;
     var path:string;
   
-    var  headers:c_ptr(evkeyvalq);
+    var  _headers:c_ptr(evkeyvalq);
+    var headersDom:domain(string);
+    var headers:[headersDom]string;
+    //var paramsDom:domain(string);
+    //var params:[paramsDom]string;
+
+
+
     var req:c_ptr(evhttp_request);
     var buffer:c_ptr(evbuffer);
     var response:ClientResponse=nil;
+
+    var formEncoded=true;
+    var urlGetparams:string;
+
+
 
     proc ClientRequest(){
         this.response=new ClientResponse();
@@ -100,7 +129,7 @@ class ClientRequest{
         this.response=new ClientResponse();
         
         this.req = evhttp_request_new(c_ptrTo(response_cb), this:c_void_ptr);
-        this.headers = evhttp_request_get_output_headers(this.req);
+        this._headers = evhttp_request_get_output_headers(this.req);
         this.buffer= evhttp_request_get_output_buffer(this.req);
 
     }
@@ -150,12 +179,9 @@ class ClientRequest{
     }
     //Adds custom header to Request
     proc AddHeader(header_name:string,header_value:string){
-         evhttp_add_header(this.headers, header_name.localize().c_str(), header_value.localize().c_str());
+        this.headers[header_name]=header_value;
     }
     
-    proc addParams(header_name:string, header_value:string){
-
-    }
 
     proc OnResponse(req:c_ptr(evhttp_request),buffer:c_ptr(evbuffer)){
         if(this.response==nil){
@@ -165,25 +191,56 @@ class ClientRequest{
     }
     
     //Sends the requests and returns the response object
-    proc this():ClientResponse{
-        this.Send();
-        
+    proc this():ClientResponse throws{
+        this.formEncoded=false;
+        try! this.Send();
+        return this.response;
+    }
+    //Sends the requests and returns the response object
+    proc this(b:bool):ClientResponse throws{
+        this.formEncoded=bool;
+       try! this.Send();
         return this.response;
     }
 
+
 //Sends object as Json and returns the response object
-    proc this(obj:?eltType):ClientResponse{
+    proc this(obj:?eltType, b:bool=false):ClientResponse throws{
+        this.formEncoded=b;
         this.Write(obj);  
-        this.Send();
+        try! this.Send();
         return this.response;
     } 
 
     proc Write(str ...?vparams){
     for param el in 1..vparams{     
-         this._print(str[el]);
+         if(!isArray(el)){
+             this._print(str[el]);
+         }else{
+             this._printArr(str[el]);
+         }
     }
   }
+
+  proc _printArr(str:[?D]?eltType){
+        if(!this.formEncoded){
+            try{
+                var jsonstr:string = "%jt".format(str);
+                evbuffer_add_printf(this.buffer, "%s".localize().c_str(), jsonstr.localize().c_str());
+            }catch{
+                writeln("Cannot serialize content");
+            }
+       
+       }else{
+            //Encode form
+            var formStr:string;
+            formStr=Utils.ArrayToUrlEncode(str);
+            evbuffer_add_printf(this.buffer, "%s".localize().c_str(), formStr.localize().c_str());
+        }
+  } 
+  
   proc _print(str:?eltType){
+      //writeln("__Print:: ",str);
     select eltType{
       when int{
         evbuffer_add_printf(this.buffer, "%d".localize().c_str(), str);
@@ -195,22 +252,84 @@ class ClientRequest{
         evbuffer_add_printf(this.buffer, "%s".localize().c_str(), str.localize().c_str());
       }
       otherwise{
-        try{
-            var jsonstr:string = "%jt".format(str);
-            evbuffer_add_printf(this.buffer, "%s".localize().c_str(), jsonstr.localize().c_str());
-        }catch{
-            writeln("Cannot serialize content");
+          if(!this.formEncoded){
+            try{
+
+                var jsonstr:string = "%jt".format(str);
+                 //writeln("__Print::Encoding as Json ",jsonstr);
+                evbuffer_add_printf(this.buffer, "%s".localize().c_str(), jsonstr.localize().c_str());
+            }catch{
+                writeln("Cannot serialize content");
+            }
+       
+       }else{
+            //Encode form
+
+            var formStr:string;
+            if(isArray(str)){
+                
+                formStr=Utils.ArrayToUrlEncode(str);
+
+                if(this.verb=="GET"){
+                    this.urlGetparams=formStr;
+                    return;
+                }
+
+                 //writeln("__Print::Encoding as form ",formStr);
+
+
+            }else{
+                var obj = str; 
+                var objArr = Utils.objToArray(obj);
+                formStr=Utils.ArrayToUrlEncode(objArr);
+                if(this.verb=="GET"){
+                    this.urlGetparams=formStr;
+                    return;
+                }
+                //writeln("__Print::Encoding Obj as form ",formStr);
+            }
+            
+            evbuffer_add_printf(this.buffer, "%s".localize().c_str(), formStr.localize().c_str());
         }
+
       }
     }
   }
-    proc Send(){
+
+    proc Send() throws{
         this.AddHeader( "Host", this.client.host);
         this.AddHeader( "Connection", "close");
         this.AddHeader( "Accept","*/*"); 	
         this.AddHeader( "User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36 ChrestClient/0.0.1"); 	
-        evhttp_make_request(this.client.con, this.req, this.verbToConstant(this.verb), this.path.localize().c_str());        
+        
+        if(this.formEncoded){
+            this.AddHeader( "Content-Type","application/x-www-form-urlencoded");
+        }
+
+
+        for header_name in this.headersDom{
+            var header_value = this.headers[header_name];
+            evhttp_add_header(this._headers, header_name.localize().c_str(), header_value.localize().c_str());            
+        }
+
+        var path= this.path;
+
+        if(this.verb=="GET"&& this.urlGetparams!=""){
+           path+= "?"+this.urlGetparams;
+        }
+
+       var errCode = evhttp_make_request(this.client.con, this.req, this.verbToConstant(this.verb), path.localize().c_str());        
+        
+        if(errCode<0){
+
+            throw new  ConnectionError();
+
+        }
+        
         this.client.Dispatch();
+
+        
+
     }
     
     proc getResponse():ClientRequest{
@@ -224,7 +343,8 @@ class ChrestClient{
     var host:string;
     var port:int=80;
     var con:c_ptr(evhttp_connection);
-    
+
+    var formEncoded=false;
 
     proc ChrestClient(host:string, port:int){
         this.host = host;
@@ -232,20 +352,40 @@ class ChrestClient{
         this.ebase = event_base_new();
         this.con = evhttp_connection_base_new(this.ebase, c_nil, this.host.localize().c_str(), this.port:c_ushort);
     }
+
+    proc setFormEncoded(b:bool){
+        this.formEncoded=b;
+    }
+
     // make GET call using custom request data
-    proc Get(path:string, req:ClientRequest){
+    proc Get(path:string, req:ClientRequest) throws{
+     try!{
      var req:ClientRequest;
         if(req==nil){
          req = new ClientRequest(this,"GET",path);
         }
         req.configure(this,"GET",path);
-        var res = req();
+        var res =  req(this.formEncoded);
         return res;
+        }
     }
 
     proc Get(path:string){
         var req = new ClientRequest(this,"GET",path);
         return req();
+    }
+
+    // makes Post call send obj as json
+    proc Get(path:string, obj, _req:ClientRequest=nil) {
+        var req:ClientRequest;
+        if(_req==nil){
+         req = new ClientRequest(this,"GET",path);
+        }else{
+            req= _req;
+        }
+        req.configure(this,"GET",path);
+        var res = try! req(obj, true);
+        return res;
     }
     proc Post(path:string, _req:ClientRequest){
         var req:ClientRequest;
@@ -255,11 +395,11 @@ class ChrestClient{
             req= _req;
         }
         req.configure(this,"POST",path);
-        var res = req();
+        var res = try! req( this.formEncoded);
         return res;
     }
     // makes Post call send obj as json
-    proc Post(path:string, obj:?eltType, _req:ClientRequest=nil){
+    proc Post(path:string, obj, _req:ClientRequest=nil){
         var req:ClientRequest;
         if(_req==nil){
          req = new ClientRequest(this,"POST",path);
@@ -267,7 +407,7 @@ class ChrestClient{
             req= _req;
         }
         req.configure(this,"POST",path);
-        var res = req(obj);
+        var res = try! req(obj, this.formEncoded);
         return res;
     }
 
@@ -287,7 +427,7 @@ class ChrestClient{
             req= _req;
         }
         req.configure(this,"PUT",path);
-        var res = req();
+        var res = try! req( this.formEncoded);
         return res;
     }
      // makes Put call send obj as json
@@ -299,7 +439,7 @@ class ChrestClient{
             req= _req;
         }
         req.configure(this,"PUT",path);
-        var res = req(obj);
+        var res = try! req(obj, this.formEncoded);
         return res;
     }
     proc Delete(path:string){
@@ -314,7 +454,7 @@ class ChrestClient{
             req= _req;
         }
         req.configure(this,"DELETE",path);
-        var res = req();
+        var res = try! req( this.formEncoded);
         return res;
     }
      // makes Delete call send obj as json
@@ -326,7 +466,7 @@ class ChrestClient{
             req= _req;
         }
         req.configure(this,"DELETE",path);
-        var res = req(obj);
+        var res = try! req(obj, this.formEncoded);
         return res;
     }
     proc Connect(path:string){
@@ -341,7 +481,7 @@ class ChrestClient{
             req= _req;
         }
         req.configure(this,"CONNECT",path);
-        var res = req();
+        var res = try! req( this.formEncoded);
         return res;
     }
      // makes Connect call send obj as json
@@ -353,7 +493,7 @@ class ChrestClient{
             req= _req;
         }
         req.configure(this,"CONNECT",path);
-        var res = req(obj);
+        var res =  try! req(obj, this.formEncoded);
         return res;
     }
     proc Options(path:string){
@@ -368,7 +508,7 @@ class ChrestClient{
             req= _req;
         }
         req.configure(this,"OPTIONS",path);
-        var res = req();
+        var res = try! req( this.formEncoded);
         return res;
     }
      // makes Options call send obj as json
@@ -380,7 +520,7 @@ class ChrestClient{
             req= _req;
         }
         req.configure(this,"OPTIONS",path);
-        var res = req(obj);
+        var res = try!  req(obj, this.formEncoded);
         return res;
     }
     proc Trace(path:string){
@@ -395,7 +535,7 @@ class ChrestClient{
             req= _req;
         }
         req.configure(this,"TRACE",path);
-        var res = req();
+        var res = try! req( this.formEncoded);
         return res;
     }
      // makes Trace call send obj as json
@@ -407,7 +547,7 @@ class ChrestClient{
             req= _req;
         }
         req.configure(this,"TRACE",path);
-        var res = req(obj);
+        var res = try!  req(obj, this.formEncoded);
         return res;
     }
     proc Head(path:string){
@@ -422,7 +562,7 @@ class ChrestClient{
             req= _req;
         }
         req.configure(this,"HEAD",path);
-        var res = req();
+        var res = try! req( this.formEncoded);
         return res;
     }
      // makes Head call send obj as json
@@ -434,7 +574,7 @@ class ChrestClient{
             req= _req;
         }
         req.configure(this,"HEAD",path);
-        var res = req(obj);
+        var res =  try! req(obj, this.formEncoded);
         return res;
     }
     proc Patch(path:string){
@@ -449,7 +589,7 @@ class ChrestClient{
             req= _req;
         }
         req.configure(this,"PATCH",path);
-        var res = req();
+        var res = try! req( this.formEncoded);
         return res;
     }
      // makes Patch call send obj as json
@@ -461,7 +601,7 @@ class ChrestClient{
             req= _req;
         }
         req.configure(this,"PATCH",path);
-        var res = req(obj);
+        var res =  try! req(obj, this.formEncoded);
         return res;
     }
 
@@ -479,8 +619,39 @@ class ChrestClient{
             return path;
             
         }
+        proc objToArray(ref el:?eltType){
 
+        var cols_dim:domain(string);
+        var cols:[cols_dim]string;
+
+            for param i in 1..numFields(eltType) {
+            var fname = getFieldName(eltType,i);
+            var value = getFieldRef(el, i);// =  row[fname];
+            cols[fname:string] = value:string;
+            }
+
+            return cols;
     }
+
+    proc ArrayToUrlEncode(A:[?D]?eltType):string{
+        var i=0;
+        var prefix="";
+        var params="";
+        for key in D{
+            if(i>0){
+                prefix="&";
+            }
+            var ukey:string = new string(evhttp_uriencode(key.localize().c_str(),key.length:c_int,1:c_int));
+            var value = A[key];
+            var uvalue:string = new string(evhttp_uriencode(value.localize().c_str(),value.length:c_int,1:c_int));
+            params += prefix+ukey+"="+uvalue; 
+            i+=1;
+        }
+
+        return params;
+    }
+
+    }//subodule
 
 
 }
