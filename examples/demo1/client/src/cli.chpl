@@ -41,6 +41,10 @@ const API_HOST: string = "127.0.0.1",
             writeln("xResponse = ", my_response.xResponse,"  yResponse = ",my_response.yResponse);
         
             //POST and other verbs serializes by default to json.
+
+            // If you want to send post with the standard form paramters you can use the configuration.
+            //cli.setFormEncoded(true);
+
             var res2 = cli.Post("/", obj);
             //Gets server response as text
             var response_content2 = res2();
