@@ -62,9 +62,9 @@ const API_HOST: string = "127.0.0.1",
     
             writeln("Response content3 = ",response_content3);
             writeln("xResponse = ", my_response3.xResponse,"  yResponse = ",my_response3.yResponse);
-        }catch e:ConnectionError{
+        }catch e:ChrestConnectionError{
             writeln(e);
-            halt(-1);
+            
         }catch{
             writeln("Some Error");
             halt(-1);
