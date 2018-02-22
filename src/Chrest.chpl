@@ -34,6 +34,8 @@ module Chrest
     use ChrestMiddlewares;
     use ChrestControllers;
 
+    use ChrestLogger;
+
     var chrstServerDomain : domain(Chrest);
     var chrstServers : [chrstServerDomain] Chrest;
 
@@ -49,6 +51,8 @@ module Chrest
         //var srv : Chrest = srv_ptr.deref();
         var srv  = srv_ptr; //chrstServers[srv];
         srv._handler(req, arg);
+
+
         return;
     }
 
@@ -74,6 +78,9 @@ module Chrest
             this.server = evhttp_new(this.ebase);
             evhttp_set_allowed_methods(this.server, EVHTTP_REQ_GET | EVHTTP_REQ_POST | EVHTTP_REQ_CONNECT | EVHTTP_REQ_HEAD | EVHTTP_REQ_OPTIONS | EVHTTP_REQ_PUT | EVHTTP_REQ_TRACE| EVHTTP_REQ_DELETE|EVHTTP_REQ_PATCH);
             evhttp_set_gencb(this.server, c_ptrTo(_gloablHandler), this: c_void_ptr);
+
+            Log.Println("Server starting at ",addr,":",port);
+
             
         }
 

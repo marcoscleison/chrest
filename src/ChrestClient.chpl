@@ -11,15 +11,52 @@ use SysError;
 
 //Callback router for the responses
 proc response_cb(req:c_ptr(evhttp_request), arg:c_void_ptr){
-    var request = arg:ClientRequest;
 
+    var request = arg:ClientRequest;
     if((request!=nil) && (req!=nil)){
             var buffer = evbuffer_new ();
             var srcBuffer = evhttp_request_get_input_buffer(req);
             evbuffer_add_buffer(buffer, srcBuffer);
             request.OnResponse(req,buffer);
-        }
-   
+    }
+}
+
+class ChrestConnectionError:Error{
+    var msg:string;
+    proc init(){
+        super.init();
+        this.msg="Connection refused.";
+    }
+    
+    proc message(){
+        return this.msg;
+    }
+}
+
+class ChrestRequestError:Error{
+    var msg:string;
+
+    proc init(req:string){
+        super.init();
+        this.msg="Request failure or Invalid ("+req+")";
+    }
+    
+    proc message(){
+        return this.msg;
+    }
+}
+
+class ChrestJsonError:Error{
+    var msg:string;
+
+    proc init(){
+        super.init();
+        this.msg="Could not process JSON.";
+    }
+    
+    proc message(){
+        return this.msg;
+    }
 }
 
 //client reponse
@@ -30,8 +67,13 @@ class ClientResponse{
     
     proc ClientResponse(){
     }
+
     proc _setRequest(req:c_ptr(evhttp_request)){
         this.req=req;
+    }
+
+    proc isRefused():bool{
+        return this.responseCode()==0;
     }
 
     proc responseCode():int{
@@ -46,6 +88,14 @@ class ClientResponse{
         return (this.responseCode()>=400);
     }
 
+    proc _verifyExceptions() throws{
+        var status:int =this.responseCode(); 
+        if (status == 0) {
+            throw new ChrestConnectionError();
+            return;
+        }    
+    }
+
 
     // used by the callback router to get response, you cannot use this directly
     proc this(req:c_ptr(evhttp_request),buffer:c_ptr(evbuffer)){
@@ -53,13 +103,16 @@ class ClientResponse{
         this.buffer=buffer;
     }
     // Get response content as string
-    proc this():string{
-         
+    proc this():string throws{
+        this._verifyExceptions();         
         return this.ParseBody();
     }
     // Get response as Chapel Object
-    proc this(type eltType):eltType{
+    proc this(type eltType):eltType throws{
         var obj:eltType = new eltType();
+        
+        this._verifyExceptions();
+
         this.ParseBody();
          try{
             var mem = openmem();
@@ -208,12 +261,12 @@ class ClientRequest{
     proc this(obj:?eltType, b:bool=false):ClientResponse throws{
         this.formEncoded=b;
         this.Write(obj);  
-        try! this.Send();
+        this.Send();
         return this.response;
     } 
 
-    proc Write(str ...?vparams){
-    for param el in 1..vparams{     
+    proc Write(str ...?vparams) throws{
+     for param el in 1..vparams{     
          if(!isArray(el)){
              this._print(str[el]);
          }else{
@@ -222,13 +275,13 @@ class ClientRequest{
     }
   }
 
-  proc _printArr(str:[?D]?eltType){
+  proc _printArr(str:[?D]?eltType) throws{
         if(!this.formEncoded){
             try{
                 var jsonstr:string = "%jt".format(str);
                 evbuffer_add_printf(this.buffer, "%s".localize().c_str(), jsonstr.localize().c_str());
             }catch{
-                writeln("Cannot serialize content");
+                throw new ChrestJsonError();
             }
        
        }else{
@@ -239,8 +292,7 @@ class ClientRequest{
         }
   } 
   
-  proc _print(str:?eltType){
-      //writeln("__Print:: ",str);
+  proc _print(str:?eltType) throws{
     select eltType{
       when int{
         evbuffer_add_printf(this.buffer, "%d".localize().c_str(), str);
@@ -254,17 +306,16 @@ class ClientRequest{
       otherwise{
           if(!this.formEncoded){
             try{
-
                 var jsonstr:string = "%jt".format(str);
-                 //writeln("__Print::Encoding as Json ",jsonstr);
+                 
                 evbuffer_add_printf(this.buffer, "%s".localize().c_str(), jsonstr.localize().c_str());
             }catch{
-                writeln("Cannot serialize content");
+                
+                throw new ChrestJsonError();
             }
        
        }else{
             //Encode form
-
             var formStr:string;
             if(isArray(str)){
                 
@@ -275,8 +326,7 @@ class ClientRequest{
                     return;
                 }
 
-                 //writeln("__Print::Encoding as form ",formStr);
-
+                 
 
             }else{
                 var obj = str; 
@@ -286,7 +336,7 @@ class ClientRequest{
                     this.urlGetparams=formStr;
                     return;
                 }
-                //writeln("__Print::Encoding Obj as form ",formStr);
+                
             }
             
             evbuffer_add_printf(this.buffer, "%s".localize().c_str(), formStr.localize().c_str());
@@ -301,35 +351,22 @@ class ClientRequest{
         this.AddHeader( "Connection", "close");
         this.AddHeader( "Accept","*/*"); 	
         this.AddHeader( "User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36 ChrestClient/0.0.1"); 	
-        
         if(this.formEncoded){
             this.AddHeader( "Content-Type","application/x-www-form-urlencoded");
         }
-
-
         for header_name in this.headersDom{
             var header_value = this.headers[header_name];
             evhttp_add_header(this._headers, header_name.localize().c_str(), header_value.localize().c_str());            
         }
-
         var path= this.path;
-
         if(this.verb=="GET"&& this.urlGetparams!=""){
            path+= "?"+this.urlGetparams;
         }
-
-       var errCode = evhttp_make_request(this.client.con, this.req, this.verbToConstant(this.verb), path.localize().c_str());        
-        
+        var errCode = evhttp_make_request(this.client.con, this.req, this.verbToConstant(this.verb), path.localize().c_str());
         if(errCode<0){
-
-            throw new  ConnectionError();
-
+            throw new  ChrestRequestError(path);
         }
-        
         this.client.Dispatch();
-
-        
-
     }
     
     proc getResponse():ClientRequest{
@@ -359,24 +396,23 @@ class ChrestClient{
 
     // make GET call using custom request data
     proc Get(path:string, req:ClientRequest) throws{
-     try!{
-     var req:ClientRequest;
+        var req:ClientRequest;
         if(req==nil){
          req = new ClientRequest(this,"GET",path);
         }
         req.configure(this,"GET",path);
         var res =  req(this.formEncoded);
         return res;
-        }
+        
     }
 
-    proc Get(path:string){
+    proc Get(path:string) throws{
         var req = new ClientRequest(this,"GET",path);
         return req();
     }
 
     // makes Post call send obj as json
-    proc Get(path:string, obj, _req:ClientRequest=nil) {
+    proc Get(path:string, obj, _req:ClientRequest=nil) throws {
         var req:ClientRequest;
         if(_req==nil){
          req = new ClientRequest(this,"GET",path);
@@ -384,10 +420,10 @@ class ChrestClient{
             req= _req;
         }
         req.configure(this,"GET",path);
-        var res = try! req(obj, true);
+        var res = req(obj, true);
         return res;
     }
-    proc Post(path:string, _req:ClientRequest){
+    proc Post(path:string, _req:ClientRequest) throws{
         var req:ClientRequest;
         if(_req==nil){
          req = new ClientRequest(this,"POST",path);
@@ -395,11 +431,11 @@ class ChrestClient{
             req= _req;
         }
         req.configure(this,"POST",path);
-        var res = try! req( this.formEncoded);
+        var res =  req( this.formEncoded);
         return res;
     }
     // makes Post call send obj as json
-    proc Post(path:string, obj, _req:ClientRequest=nil){
+    proc Post(path:string, obj, _req:ClientRequest=nil) throws{
         var req:ClientRequest;
         if(_req==nil){
          req = new ClientRequest(this,"POST",path);
@@ -407,19 +443,19 @@ class ChrestClient{
             req= _req;
         }
         req.configure(this,"POST",path);
-        var res = try! req(obj, this.formEncoded);
+        var res =  req(obj, this.formEncoded);
         return res;
     }
 
-    proc Post(path:string){
+    proc Post(path:string) throws{
         var req = new ClientRequest(this,"POST",path);
         return req();
     }
-    proc Put(path:string){
+    proc Put(path:string) throws{
         var req = new ClientRequest(this,"PUT",path);
         return req();
     }
-    proc Put(path:string, _req:ClientRequest){
+    proc Put(path:string, _req:ClientRequest) throws{
         var req:ClientRequest;
         if(_req==nil){
          req = new ClientRequest(this,"PUT",path);
@@ -427,11 +463,11 @@ class ChrestClient{
             req= _req;
         }
         req.configure(this,"PUT",path);
-        var res = try! req( this.formEncoded);
+        var res =  req( this.formEncoded);
         return res;
     }
      // makes Put call send obj as json
-    proc Put(path:string, obj:?eltType, _req:ClientRequest=nil){
+    proc Put(path:string, obj:?eltType, _req:ClientRequest=nil) throws{
         var req:ClientRequest;
         if(_req==nil){
          req = new ClientRequest(this,"PUT",path);
@@ -439,14 +475,14 @@ class ChrestClient{
             req= _req;
         }
         req.configure(this,"PUT",path);
-        var res = try! req(obj, this.formEncoded);
+        var res = req(obj, this.formEncoded);
         return res;
     }
-    proc Delete(path:string){
+    proc Delete(path:string) throws{
         var req = new ClientRequest(this,"DELETE",path);
         return req();
     }
-    proc Delete(path:string, _req:ClientRequest){
+    proc Delete(path:string, _req:ClientRequest) throws{
         var req:ClientRequest;
         if(_req==nil){
          req = new ClientRequest(this,"DELETE",path);
@@ -454,11 +490,11 @@ class ChrestClient{
             req= _req;
         }
         req.configure(this,"DELETE",path);
-        var res = try! req( this.formEncoded);
+        var res =  req( this.formEncoded);
         return res;
     }
      // makes Delete call send obj as json
-    proc Delete(path:string, obj:?eltType, _req:ClientRequest=nil){
+    proc Delete(path:string, obj:?eltType, _req:ClientRequest=nil) throws{
         var req:ClientRequest;
         if(_req==nil){
          req = new ClientRequest(this,"DELETE",path);
@@ -466,14 +502,14 @@ class ChrestClient{
             req= _req;
         }
         req.configure(this,"DELETE",path);
-        var res = try! req(obj, this.formEncoded);
+        var res = req(obj, this.formEncoded);
         return res;
     }
-    proc Connect(path:string){
+    proc Connect(path:string) throws{
         var req = new ClientRequest(this,"CONNECT",path);
         return req();
     }
-    proc Connect(path:string, _req:ClientRequest){
+    proc Connect(path:string, _req:ClientRequest) throws{
         var req:ClientRequest;
         if(_req==nil){
          req = new ClientRequest(this,"CONNECT",path);
@@ -481,11 +517,11 @@ class ChrestClient{
             req= _req;
         }
         req.configure(this,"CONNECT",path);
-        var res = try! req( this.formEncoded);
+        var res =  req( this.formEncoded);
         return res;
     }
      // makes Connect call send obj as json
-    proc Connect(path:string, obj:?eltType, _req:ClientRequest=nil){
+    proc Connect(path:string, obj:?eltType, _req:ClientRequest=nil) throws{
         var req:ClientRequest;
         if(_req==nil){
          req = new ClientRequest(this,"CONNECT",path);
@@ -493,14 +529,14 @@ class ChrestClient{
             req= _req;
         }
         req.configure(this,"CONNECT",path);
-        var res =  try! req(obj, this.formEncoded);
+        var res =  req(obj, this.formEncoded);
         return res;
     }
-    proc Options(path:string){
+    proc Options(path:string) throws{
         var req = new ClientRequest(this,"OPTIONS",path);
         return req();
     }
-    proc Options(path:string, _req:ClientRequest){
+    proc Options(path:string, _req:ClientRequest) throws{
         var req:ClientRequest;
         if(_req==nil){
          req = new ClientRequest(this,"OPTIONS",path);
@@ -508,11 +544,11 @@ class ChrestClient{
             req= _req;
         }
         req.configure(this,"OPTIONS",path);
-        var res = try! req( this.formEncoded);
+        var res =  req( this.formEncoded);
         return res;
     }
      // makes Options call send obj as json
-    proc Options(path:string, obj:?eltType, _req:ClientRequest=nil){
+    proc Options(path:string, obj:?eltType, _req:ClientRequest=nil) throws{
         var req:ClientRequest;
         if(_req==nil){
          req = new ClientRequest(this,"OPTIONS",path);
@@ -523,11 +559,11 @@ class ChrestClient{
         var res = try!  req(obj, this.formEncoded);
         return res;
     }
-    proc Trace(path:string){
+    proc Trace(path:string) throws{
         var req = new ClientRequest(this,"TRACE",path);
         return req();
     }
-    proc Trace(path:string, _req:ClientRequest){
+    proc Trace(path:string, _req:ClientRequest) throws{
         var req:ClientRequest;
         if(_req==nil){
          req = new ClientRequest(this,"TRACE",path);
@@ -535,11 +571,11 @@ class ChrestClient{
             req= _req;
         }
         req.configure(this,"TRACE",path);
-        var res = try! req( this.formEncoded);
+        var res =  req( this.formEncoded);
         return res;
     }
      // makes Trace call send obj as json
-    proc Trace(path:string, obj:?eltType, _req:ClientRequest=nil){
+    proc Trace(path:string, obj:?eltType, _req:ClientRequest=nil) throws{
         var req:ClientRequest;
         if(_req==nil){
          req = new ClientRequest(this,"TRACE",path);
@@ -550,11 +586,11 @@ class ChrestClient{
         var res = try!  req(obj, this.formEncoded);
         return res;
     }
-    proc Head(path:string){
+    proc Head(path:string) throws{
         var req = new ClientRequest(this,"HEAD",path);
         return req();
     }
-    proc Head(path:string, _req:ClientRequest){
+    proc Head(path:string, _req:ClientRequest) throws{
         var req:ClientRequest;
         if(_req==nil){
          req = new ClientRequest(this,"HEAD",path);
@@ -562,11 +598,11 @@ class ChrestClient{
             req= _req;
         }
         req.configure(this,"HEAD",path);
-        var res = try! req( this.formEncoded);
+        var res =  req( this.formEncoded);
         return res;
     }
      // makes Head call send obj as json
-    proc Head(path:string, obj:?eltType, _req:ClientRequest=nil){
+    proc Head(path:string, obj:?eltType, _req:ClientRequest=nil) throws{
         var req:ClientRequest;
         if(_req==nil){
          req = new ClientRequest(this,"HEAD",path);
@@ -574,14 +610,14 @@ class ChrestClient{
             req= _req;
         }
         req.configure(this,"HEAD",path);
-        var res =  try! req(obj, this.formEncoded);
+        var res =  req(obj, this.formEncoded);
         return res;
     }
-    proc Patch(path:string){
+    proc Patch(path:string) throws{
         var req = new ClientRequest(this,"PATCH",path);
         return req();
     }
-    proc Patch(path:string, _req:ClientRequest){
+    proc Patch(path:string, _req:ClientRequest) throws{
         var req:ClientRequest;
         if(_req==nil){
          req = new ClientRequest(this,"PATCH",path);
@@ -589,11 +625,11 @@ class ChrestClient{
             req= _req;
         }
         req.configure(this,"PATCH",path);
-        var res = try! req( this.formEncoded);
+        var res =  req( this.formEncoded);
         return res;
     }
      // makes Patch call send obj as json
-    proc Patch(path:string, obj:?eltType, _req:ClientRequest=nil){
+    proc Patch(path:string, obj:?eltType, _req:ClientRequest=nil) throws{
         var req:ClientRequest;
         if(_req==nil){
          req = new ClientRequest(this,"PATCH",path);
@@ -601,7 +637,7 @@ class ChrestClient{
             req= _req;
         }
         req.configure(this,"PATCH",path);
-        var res =  try! req(obj, this.formEncoded);
+        var res =  req(obj, this.formEncoded);
         return res;
     }
 

@@ -33,9 +33,45 @@ module httpev
   extern "struct evkeyvalq" record evkeyvalq{
 
   };
+
+  //extern ev_uint16_t c_ushort
+
   extern "struct evhttp_request" record evhttp_request
   {
     var output_headers : c_ptr(evkeyvalq);
+    //var response_code: c_ushort;
+    //var response_code_line: c_string;
+
+    var input_headers:c_ptr(evkeyvalq);
+	 // var output_headers:c_ptr(evkeyvalq);
+	/* address of the remote host and the port connection came from */
+	  var remote_host:c_string;
+	  var remote_port:c_ushort;
+
+	/* cache of the hostname for evhttp_request_get_host */
+	  var host_cache:c_string;
+
+	  //var kind:evhttp_request_kind;
+	 // var  _type:evhttp_cmd_type;
+
+	  var headers_size:size_t;
+	  var body_size:size_t;
+
+	  var uri:c_string;			/* uri after HTTP request was parsed */
+	  var uri_elems:c_string;	/* uri elements */
+
+	  var major:c_char;			/* HTTP Major number */
+	  var minor:c_char;			/* HTTP Minor number */
+
+	var response_code:c_int;		/* HTTP Response code */
+	var response_code_line:c_string;	/* Readable response */
+
+	var input_buffer:c_ptr(evbuffer);	/* read data */
+	var ntoread:int;
+	var chunked:uint;		/* a chunked request */
+	    
+
+    
   };
   extern "struct evhttp_uri" record evhttp_uri{};
   
@@ -67,7 +103,7 @@ extern proc evhttp_send_reply(req, code
                               : c_ptr(evbuffer)) : void;
 extern proc evhttp_request_get_input_headers(req
                                              : c_ptr(evhttp_request)) : c_ptr(evkeyvalq);
-extern proc evhttp_request_get_response_code(req: c_ptr(evhttp_request));
+extern proc evhttp_request_get_response_code(req: c_ptr(evhttp_request)):c_int;
 extern proc evhttp_find_header(const headers
                                : c_ptr(evkeyvalq), key
                                : c_string) : c_string;
