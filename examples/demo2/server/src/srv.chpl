@@ -17,6 +17,7 @@ const API_HOST: string = "127.0.0.1",
       this.n = n;
       this.v = v;
     }
+    
   }
 
 class IndexController:ChrestController {
