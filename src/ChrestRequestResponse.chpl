@@ -142,7 +142,7 @@ Parses the body of POST,PUT etc. requests
     }
 
     proc InputJson(ref obj:?eltType){
-
+        try{
         if(this.getCommand()=="GET"){
             for param i in 1..numFields(eltType) {
                 var fname = getFieldName(eltType,i);
@@ -151,17 +151,22 @@ Parses the body of POST,PUT etc. requests
                 if(isNumericType(ftype)&&(s=="")){
                     getFieldRef(obj, i)= 0:ftype;
                 }else{
-                    getFieldRef(obj, i)=s:ftype;
+                        getFieldRef(obj, i)=s:ftype;
+                    }
                 }
-            }
-            return obj;
-        }else{
-            try{
+            
+                return obj;
+
+
+            }else{
+            
                 var mem = openmem();
                 var writer = mem.writer().write(this.bodyData);
                 var reader = mem.reader();
                 reader.readf("%jt", obj);
                 return obj;
+
+            }
 
             }catch{
                 writeln("Cannot parse JSon Request");
@@ -169,7 +174,6 @@ Parses the body of POST,PUT etc. requests
                 writeln(this.bodyData);
                 return obj;
             }
-      }
     }
 
     proc getUri():string{

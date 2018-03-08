@@ -17,6 +17,7 @@ proc response_cb(req:c_ptr(evhttp_request), arg:c_void_ptr){
             var buffer = evbuffer_new ();
             var srcBuffer = evhttp_request_get_input_buffer(req);
             evbuffer_add_buffer(buffer, srcBuffer);
+
             request.OnResponse(req,buffer);
     }
 }
@@ -64,12 +65,17 @@ class ClientResponse{
     var req:c_ptr(evhttp_request);
     var buffer:c_ptr(evbuffer);
     var bodyData:string;
+    var headers:c_ptr(evkeyvalq); 
     
     proc ClientResponse(){
     }
 
     proc _setRequest(req:c_ptr(evhttp_request)){
         this.req=req;
+    }
+
+    proc getHeader(key:string){
+        return new string(evhttp_find_header(this.headers,key.localize().c_str()));
     }
 
     proc isRefused():bool{
@@ -101,6 +107,8 @@ class ClientResponse{
     proc this(req:c_ptr(evhttp_request),buffer:c_ptr(evbuffer)){
         this._setRequest(req);
         this.buffer=buffer;
+        this.headers = evhttp_request_get_input_headers(this.req);
+        writeln("Content Length:",this.getHeader("Content-Length"));
     }
     // Get response content as string
     proc this():string throws{
