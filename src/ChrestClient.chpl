@@ -75,14 +75,19 @@ class ChrestJsonError:Error{
 
 //client reponse
 class ClientResponse{
+    
+    var response_header_dom:domain(string);
+    var response_headers:[response_header_dom]string;
+
     var req:c_ptr(evhttp_request);
     var buffer:c_ptr(evbuffer);
     var bodyData:string;
     var headers:c_ptr(evkeyvalq); 
     var client: ChrestClient;
-    var response_header_dom:domain(string);
-    var response_headers:[response_header_dom]string;
     
+    
+
+
     proc ClientResponse(){
     }
 
@@ -424,6 +429,8 @@ class ChrestClient{
 
     var allow_response_headers:[{1..0}]string;
 
+    var sessions:[{1..0}]ChrestSession;
+
     var formEncoded=false;
 
     proc ChrestClient(host:string, port:int){
@@ -431,7 +438,9 @@ class ChrestClient{
         this.port = port;
         this.ebase = event_base_new();
         this.con = evhttp_connection_base_new(this.ebase, c_nil, this.host.localize().c_str(), this.port:c_ushort);
-    
+        var cookiemgr = new ChrestSession();
+        this.sessions.push_back(cookiemgr);
+
         this.allowReadResponseHeaders("Content-Length");
         this.allowReadResponseHeaders("Access-Control-Allow-Origin");
 this.allowReadResponseHeaders("Access-Control-Allow-Credentials");
@@ -502,7 +511,12 @@ this.allowReadResponseHeaders("X-Frame-Options");
 
     proc Get(path:string) throws{
         var req = new ClientRequest(this,"GET",path);
-        return req();
+
+        var res=req();
+        for sess in this.sessions{
+            sess.OnResponse(res);
+        }
+        return res;
     }
 
     // makes Post call send obj as json
@@ -740,6 +754,70 @@ this.allowReadResponseHeaders("X-Frame-Options");
         event_base_dispatch(this.ebase);
     }
  }
+
+
+    class ChrestSession{
+        proc ChrestSession(){
+
+        }
+
+        proc OnRequest(ref req:ClientRequest):bool{
+            return true;
+        }
+
+        proc OnResponse(ref res:ClientResponse):bool{
+            return true;
+        }
+    }
+
+    class ChrestCookieSession:ChrestSession{
+        
+        var ckDom:domain(string);
+
+        
+        var cookies:[ckDom]string;
+
+        proc ChrestCookieSession(){
+
+        }
+
+        proc OnRequest(ref req:ClientRequest):bool{
+            return true;
+        }
+
+        proc OnResponse(ref res:ClientResponse):bool{
+            var cookiestr = res.getHeader("Set-Cookie");
+               this.parseCookie(cookiestr);
+
+               for s in this.ckDom{
+                   writeln("Cookie: ", s," = ",this.cookies[s]);
+               }
+
+            return true;
+        }
+
+        proc parseCookie(str:string){
+            var parts = str.split("; ");
+            for part in parts{
+                var kv = part.split("=");
+                writeln(kv.length);
+                var i=0;
+                for x in kv{
+                    i+=1;
+                }
+                if( i>=2){
+                    this.cookies[kv[1]]=kv[2];
+                }
+
+            }
+        }
+
+
+
+    }
+
+
+
 
     module Utils{
         proc getPath(req: c_ptr(evhttp_request)):string{
