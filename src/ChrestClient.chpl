@@ -22,16 +22,6 @@ proc datetime.readWriteThis(f) {
 
 
 
-proc datetime.readWriteThis(f) {
-  var dash  = new ioLiteral("-"),
-      colon = new ioLiteral(":");
-  f <~> new ioLiteral("{") <~> chpl_date.chpl_year <~> dash
-    <~> chpl_date.chpl_month <~> dash <~> chpl_date.chpl_day
-    <~> new ioLiteral(" ") <~> chpl_time.chpl_hour <~> colon
-    <~> chpl_time.chpl_minute <~> colon <~> chpl_time.chpl_second
-    <~> new ioLiteral(".") <~> chpl_time.chpl_microsecond
-    <~> new ioLiteral("}");
-}
 
 //Callback router for the responses
 proc response_cb(req:c_ptr(evhttp_request), arg:c_void_ptr){
@@ -40,9 +30,7 @@ proc response_cb(req:c_ptr(evhttp_request), arg:c_void_ptr){
     if((request!=nil) && (req!=nil)){
             var buffer = evbuffer_new ();
             var srcBuffer = evhttp_request_get_input_buffer(req);
-            evbuffer_add_buffer(buffer, srcBuffer);
-
-            
+            evbuffer_add_buffer(buffer, srcBuffer);   
             request.OnResponse(req,buffer);
     }
 }
@@ -148,11 +136,7 @@ class ClientResponse{
         this.headers = evhttp_request_get_input_headers(this.req);
         
         for h in this.client.allow_response_headers{
-
-            var s = this._getHeader(h);
-            
-            writeln(h,"=",s);
-            
+            var s = this._getHeader(h);      
             this.response_headers[h] = s;
         }
 
@@ -449,17 +433,17 @@ class ChrestClient{
         this.con = evhttp_connection_base_new(this.ebase, c_nil, this.host.localize().c_str(), this.port:c_ushort);
     
         this.allowReadResponseHeaders("Content-Length");
-        this.allowReadResponseHeaders("Access-Control-Allow-Origin,");
-this.allowReadResponseHeaders("Access-Control-Allow-Credentials,");
-this.allowReadResponseHeaders("Access-Control-Expose-Headers,");
-this.allowReadResponseHeaders("Access-Control-Max-Age,");
-this.allowReadResponseHeaders("Access-Control-Allow-Methods,");
-this.allowReadResponseHeaders("Access-Control-Allow-Headers[7]");
-this.allowReadResponseHeaders("Accept-Patch[34]");
+        this.allowReadResponseHeaders("Access-Control-Allow-Origin");
+this.allowReadResponseHeaders("Access-Control-Allow-Credentials");
+this.allowReadResponseHeaders("Access-Control-Expose-Headers");
+this.allowReadResponseHeaders("Access-Control-Max-Age");
+this.allowReadResponseHeaders("Access-Control-Allow-Methods");
+this.allowReadResponseHeaders("Access-Control-Allow-Headers");
+this.allowReadResponseHeaders("Accept-Patch");
 this.allowReadResponseHeaders("Accept-Ranges");
 this.allowReadResponseHeaders("Age");
 this.allowReadResponseHeaders("Allow");
-this.allowReadResponseHeaders("Alt-Svc[35]");
+this.allowReadResponseHeaders("Alt-Svc");
 this.allowReadResponseHeaders("Cache-Control");
 this.allowReadResponseHeaders("Connection");
 this.allowReadResponseHeaders("Content-Disposition");
@@ -479,7 +463,7 @@ this.allowReadResponseHeaders("Location");
 this.allowReadResponseHeaders("P3P");
 this.allowReadResponseHeaders("Pragma");
 this.allowReadResponseHeaders("Proxy-Authenticate");
-this.allowReadResponseHeaders("Public-Key-Pins[42]");
+this.allowReadResponseHeaders("Public-Key-Pins");
 this.allowReadResponseHeaders("Retry-After");
 this.allowReadResponseHeaders("Server");
 this.allowReadResponseHeaders("Set-Cookie");

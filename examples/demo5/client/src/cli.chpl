@@ -4,7 +4,7 @@ module Main{
 use ChrestClient;
 const API_HOST: string = "127.0.0.1",
       API_PORT: int = 8080;
-      
+
 //This class is the model data to be sent to the server
 
 
@@ -20,7 +20,7 @@ const API_HOST: string = "127.0.0.1",
             var res = cli.Get("/"); //Makes the request
             res();
 
-            writeln("Content-Encoding:",res.getHeader("Content-Encoding"));
+            writeln("Set-Cookie:",res.getHeader("Set-Cookie"));
 
 
 

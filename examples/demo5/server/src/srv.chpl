@@ -12,8 +12,9 @@ class MyController:ChrestController{
     proc Get(ref req:Request, ref res:Response){
 
         res.Write("Oi mundo");
-        
 
+        res.SetCookie("name","marcos-cleison","/");
+        
     }
     //process Post Requests
     proc Post(ref req:Request,ref res:Response){
