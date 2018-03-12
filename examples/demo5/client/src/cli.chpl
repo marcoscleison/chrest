@@ -20,7 +20,7 @@ const API_HOST: string = "127.0.0.1",
             var res = cli.Get("/"); //Makes the request
             res();
 
-            writeln("Content-Type:",res.getHeader("Content-Type"));
+            writeln("Content-Encoding:",res.getHeader("Content-Encoding"));
 
 
 
@@ -35,3 +35,10 @@ const API_HOST: string = "127.0.0.1",
     }
 
 }
+
+
+/*
+
+
+
+*/

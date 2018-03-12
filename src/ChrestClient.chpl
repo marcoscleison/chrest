@@ -7,6 +7,20 @@ use SysCTypes;
 use Types;
 use Reflection;
 use SysError;
+use  DateTime;
+
+proc datetime.readWriteThis(f) {
+  var dash  = new ioLiteral("-"),
+      colon = new ioLiteral(":");
+  f <~> new ioLiteral("{") <~> chpl_date.chpl_year <~> dash
+    <~> chpl_date.chpl_month <~> dash <~> chpl_date.chpl_day
+    <~> new ioLiteral(" ") <~> chpl_time.chpl_hour <~> colon
+    <~> chpl_time.chpl_minute <~> colon <~> chpl_time.chpl_second
+    <~> new ioLiteral(".") <~> chpl_time.chpl_microsecond
+    <~> new ioLiteral("}");
+}
+
+
 
 
 //Callback router for the responses
@@ -18,6 +32,7 @@ proc response_cb(req:c_ptr(evhttp_request), arg:c_void_ptr){
             var srcBuffer = evhttp_request_get_input_buffer(req);
             evbuffer_add_buffer(buffer, srcBuffer);
 
+            
             request.OnResponse(req,buffer);
     }
 }
@@ -66,6 +81,9 @@ class ClientResponse{
     var buffer:c_ptr(evbuffer);
     var bodyData:string;
     var headers:c_ptr(evkeyvalq); 
+    var client: ChrestClient;
+    var response_header_dom:domain(string);
+    var response_headers:[response_header_dom]string;
     
     proc ClientResponse(){
     }
@@ -74,8 +92,18 @@ class ClientResponse{
         this.req=req;
     }
 
-    proc getHeader(key:string){
+    proc _setClient(cli:ChrestClient){
+        this.client = cli;
+    }
+
+    proc _getHeader(key:string){
         return new string(evhttp_find_header(this.headers,key.localize().c_str()));
+    }
+    proc getHeader(key:string){
+        if(this.response_header_dom.member(key)){
+            return this.response_headers[key];
+        }
+        return "";
     }
 
     proc isRefused():bool{
@@ -108,7 +136,16 @@ class ClientResponse{
         this._setRequest(req);
         this.buffer=buffer;
         this.headers = evhttp_request_get_input_headers(this.req);
-        writeln("Content Length:",this.getHeader("Content-Length"));
+        
+        for h in this.client.allow_response_headers{
+
+            var s = this._getHeader(h);
+            
+            writeln(h,"=",s);
+            
+            this.response_headers[h] = s;
+        }
+
     }
     // Get response content as string
     proc this():string throws{
@@ -248,6 +285,8 @@ class ClientRequest{
         if(this.response==nil){
             this.response = new ClientResponse();
         }
+
+        this.response._setClient(this.client);
         this.response(req,buffer);
     }
     
@@ -389,6 +428,8 @@ class ChrestClient{
     var port:int=80;
     var con:c_ptr(evhttp_connection);
 
+    var allow_response_headers:[{1..0}]string;
+
     var formEncoded=false;
 
     proc ChrestClient(host:string, port:int){
@@ -396,10 +437,61 @@ class ChrestClient{
         this.port = port;
         this.ebase = event_base_new();
         this.con = evhttp_connection_base_new(this.ebase, c_nil, this.host.localize().c_str(), this.port:c_ushort);
+    
+        this.allowReadResponseHeaders("Content-Length");
+        this.allowReadResponseHeaders("Access-Control-Allow-Origin,");
+this.allowReadResponseHeaders("Access-Control-Allow-Credentials,");
+this.allowReadResponseHeaders("Access-Control-Expose-Headers,");
+this.allowReadResponseHeaders("Access-Control-Max-Age,");
+this.allowReadResponseHeaders("Access-Control-Allow-Methods,");
+this.allowReadResponseHeaders("Access-Control-Allow-Headers[7]");
+this.allowReadResponseHeaders("Accept-Patch[34]");
+this.allowReadResponseHeaders("Accept-Ranges");
+this.allowReadResponseHeaders("Age");
+this.allowReadResponseHeaders("Allow");
+this.allowReadResponseHeaders("Alt-Svc[35]");
+this.allowReadResponseHeaders("Cache-Control");
+this.allowReadResponseHeaders("Connection");
+this.allowReadResponseHeaders("Content-Disposition");
+this.allowReadResponseHeaders("Content-Encoding");
+this.allowReadResponseHeaders("Content-Language");
+this.allowReadResponseHeaders("Content-Length");
+this.allowReadResponseHeaders("Content-Location");
+this.allowReadResponseHeaders("Content-MD5");
+this.allowReadResponseHeaders("Content-Range");
+this.allowReadResponseHeaders("Content-Type");
+this.allowReadResponseHeaders("Date");
+this.allowReadResponseHeaders("ETag");
+this.allowReadResponseHeaders("Expires");
+this.allowReadResponseHeaders("Last-Modified");
+this.allowReadResponseHeaders("Link");
+this.allowReadResponseHeaders("Location");
+this.allowReadResponseHeaders("P3P");
+this.allowReadResponseHeaders("Pragma");
+this.allowReadResponseHeaders("Proxy-Authenticate");
+this.allowReadResponseHeaders("Public-Key-Pins[42]");
+this.allowReadResponseHeaders("Retry-After");
+this.allowReadResponseHeaders("Server");
+this.allowReadResponseHeaders("Set-Cookie");
+this.allowReadResponseHeaders("Strict-Transport-Security");
+this.allowReadResponseHeaders("Trailer");
+this.allowReadResponseHeaders("Transfer-Encoding");
+this.allowReadResponseHeaders("Tk");
+this.allowReadResponseHeaders("Upgrade");
+this.allowReadResponseHeaders("Vary");
+this.allowReadResponseHeaders("Via");
+this.allowReadResponseHeaders("Warning");
+this.allowReadResponseHeaders("WWW-Authenticate");
+this.allowReadResponseHeaders("X-Frame-Options");
     }
 
     proc setFormEncoded(b:bool){
         this.formEncoded=b;
+    }
+
+
+    proc allowReadResponseHeaders(header:string){
+        this.allow_response_headers.push_back(header);
     }
 
     // make GET call using custom request data
