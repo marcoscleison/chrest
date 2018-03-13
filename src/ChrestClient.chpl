@@ -9,6 +9,7 @@ use Reflection;
 use SysError;
 use  DateTime;
 
+
 proc datetime.readWriteThis(f) {
   var dash  = new ioLiteral("-"),
       colon = new ioLiteral(":");
@@ -19,6 +20,9 @@ proc datetime.readWriteThis(f) {
     <~> new ioLiteral(".") <~> chpl_time.chpl_microsecond
     <~> new ioLiteral("}");
 }
+
+
+ 
 
 
 
@@ -76,15 +80,16 @@ class ChrestJsonError:Error{
 //client reponse
 class ClientResponse{
     
-    var response_header_dom:domain(string);
-    var response_headers:[response_header_dom]string;
+    var xx:domain(string);
+    var rxx:[xx]string;
 
     var req:c_ptr(evhttp_request);
     var buffer:c_ptr(evbuffer);
     var bodyData:string;
     var headers:c_ptr(evkeyvalq); 
     var client: ChrestClient;
-    
+    var response_header_dom:domain(string);
+    var response_headers:[response_header_dom]string;
     
 
 
@@ -421,17 +426,20 @@ class ClientRequest{
 
 }
 
+
+
 class ChrestClient{
+   // var cookieDom:domain(string); // if I declare any associative array here, it triggers error 
+   // var cookies:[cookieDom]string;
+    
     var ebase : c_ptr(event_base);   
     var host:string;
     var port:int=80;
     var con:c_ptr(evhttp_connection);
 
     var allow_response_headers:[{1..0}]string;
-
-    var sessions:[{1..0}]ChrestSession;
-
-    var cookiemgr:ChrestCookieSession;
+    
+    
 
     var formEncoded=false;
 
@@ -440,55 +448,52 @@ class ChrestClient{
         this.port = port;
         this.ebase = event_base_new();
         this.con = evhttp_connection_base_new(this.ebase, c_nil, this.host.localize().c_str(), this.port:c_ushort);
-        this.cookiemgr = new ChrestCookieSession();
-        
-        ///this.sessions.push_back(cookiemgr);
-
+       
         this.allowReadResponseHeaders("Content-Length");
         this.allowReadResponseHeaders("Access-Control-Allow-Origin");
-this.allowReadResponseHeaders("Access-Control-Allow-Credentials");
-this.allowReadResponseHeaders("Access-Control-Expose-Headers");
-this.allowReadResponseHeaders("Access-Control-Max-Age");
-this.allowReadResponseHeaders("Access-Control-Allow-Methods");
-this.allowReadResponseHeaders("Access-Control-Allow-Headers");
-this.allowReadResponseHeaders("Accept-Patch");
-this.allowReadResponseHeaders("Accept-Ranges");
-this.allowReadResponseHeaders("Age");
-this.allowReadResponseHeaders("Allow");
-this.allowReadResponseHeaders("Alt-Svc");
-this.allowReadResponseHeaders("Cache-Control");
-this.allowReadResponseHeaders("Connection");
-this.allowReadResponseHeaders("Content-Disposition");
-this.allowReadResponseHeaders("Content-Encoding");
-this.allowReadResponseHeaders("Content-Language");
-this.allowReadResponseHeaders("Content-Length");
-this.allowReadResponseHeaders("Content-Location");
-this.allowReadResponseHeaders("Content-MD5");
-this.allowReadResponseHeaders("Content-Range");
-this.allowReadResponseHeaders("Content-Type");
-this.allowReadResponseHeaders("Date");
-this.allowReadResponseHeaders("ETag");
-this.allowReadResponseHeaders("Expires");
-this.allowReadResponseHeaders("Last-Modified");
-this.allowReadResponseHeaders("Link");
-this.allowReadResponseHeaders("Location");
-this.allowReadResponseHeaders("P3P");
-this.allowReadResponseHeaders("Pragma");
-this.allowReadResponseHeaders("Proxy-Authenticate");
-this.allowReadResponseHeaders("Public-Key-Pins");
-this.allowReadResponseHeaders("Retry-After");
-this.allowReadResponseHeaders("Server");
-this.allowReadResponseHeaders("Set-Cookie");
-this.allowReadResponseHeaders("Strict-Transport-Security");
-this.allowReadResponseHeaders("Trailer");
-this.allowReadResponseHeaders("Transfer-Encoding");
-this.allowReadResponseHeaders("Tk");
-this.allowReadResponseHeaders("Upgrade");
-this.allowReadResponseHeaders("Vary");
-this.allowReadResponseHeaders("Via");
-this.allowReadResponseHeaders("Warning");
-this.allowReadResponseHeaders("WWW-Authenticate");
-this.allowReadResponseHeaders("X-Frame-Options");
+        this.allowReadResponseHeaders("Access-Control-Allow-Credentials");
+        this.allowReadResponseHeaders("Access-Control-Expose-Headers");
+        this.allowReadResponseHeaders("Access-Control-Max-Age");
+        this.allowReadResponseHeaders("Access-Control-Allow-Methods");
+        this.allowReadResponseHeaders("Access-Control-Allow-Headers");
+        this.allowReadResponseHeaders("Accept-Patch");
+        this.allowReadResponseHeaders("Accept-Ranges");
+        this.allowReadResponseHeaders("Age");
+        this.allowReadResponseHeaders("Allow");
+        this.allowReadResponseHeaders("Alt-Svc");
+        this.allowReadResponseHeaders("Cache-Control");
+        this.allowReadResponseHeaders("Connection");
+        this.allowReadResponseHeaders("Content-Disposition");
+        this.allowReadResponseHeaders("Content-Encoding");
+        this.allowReadResponseHeaders("Content-Language");
+        this.allowReadResponseHeaders("Content-Length");
+        this.allowReadResponseHeaders("Content-Location");
+        this.allowReadResponseHeaders("Content-MD5");
+        this.allowReadResponseHeaders("Content-Range");
+        this.allowReadResponseHeaders("Content-Type");
+        this.allowReadResponseHeaders("Date");
+        this.allowReadResponseHeaders("ETag");
+        this.allowReadResponseHeaders("Expires");
+        this.allowReadResponseHeaders("Last-Modified");
+        this.allowReadResponseHeaders("Link");
+        this.allowReadResponseHeaders("Location");
+        this.allowReadResponseHeaders("P3P");
+        this.allowReadResponseHeaders("Pragma");
+        this.allowReadResponseHeaders("Proxy-Authenticate");
+        this.allowReadResponseHeaders("Public-Key-Pins");
+        this.allowReadResponseHeaders("Retry-After");
+        this.allowReadResponseHeaders("Server");
+        this.allowReadResponseHeaders("Set-Cookie");
+        this.allowReadResponseHeaders("Strict-Transport-Security");
+        this.allowReadResponseHeaders("Trailer");
+        this.allowReadResponseHeaders("Transfer-Encoding");
+        this.allowReadResponseHeaders("Tk");
+        this.allowReadResponseHeaders("Upgrade");
+        this.allowReadResponseHeaders("Vary");
+        this.allowReadResponseHeaders("Via");
+        this.allowReadResponseHeaders("Warning");
+        this.allowReadResponseHeaders("WWW-Authenticate");
+        this.allowReadResponseHeaders("X-Frame-Options");
     }
 
     proc setFormEncoded(b:bool){
@@ -516,9 +521,9 @@ this.allowReadResponseHeaders("X-Frame-Options");
         var req = new ClientRequest(this,"GET",path);
 
         var res=req();
-        for sess in this.sessions{
-            sess.OnResponse(res);
-        }
+
+       // this.getResponseCookie(res);
+               
         return res;
     }
 
@@ -756,53 +761,12 @@ this.allowReadResponseHeaders("X-Frame-Options");
    proc Dispatch(){
         event_base_dispatch(this.ebase);
     }
- }
 
+   /* proc getResponseCookie(ref res:ClientResponse){
+        var str = res.getHeader("Set-Cookie");
+        writeln("Got cookie",str);
 
-    class ChrestSession{ 
-        
-        var s:string;
-        var xdom:domain(string);
-        var c:[xdom]string;
-        
-        proc ChrestSession(){
-
-        }
-
-        proc OnRequest(ref req:ClientRequest):bool{
-            return true;
-        }
-
-        proc OnResponse(ref res:ClientResponse):bool{
-            return true;
-        }
-    }
-
-    class ChrestCookieSession{
-       
-
-        proc ChrestCookieSession(){
-
-        }
-
-
-        proc OnRequest(req:ClientRequest):bool{
-            return true;
-        }
-
-        proc OnResponse(res:ClientResponse):bool{
-            //var cookiestr = res.getHeader("Set-Cookie");
-               //this.parseCookie(cookiestr);
-
-              /* for s in this.ckDom{
-                   writeln("Cookie: ", s," = ",this.cookies[s]);
-               }*/
-
-            return true;
-        }
-
-       /* proc parseCookie(str:string){
-            var parts = str.split("; ");
+        var parts = str.split("; ");
             for part in parts{
                 var kv = part.split("=");
                 writeln(kv.length);
@@ -811,17 +775,17 @@ this.allowReadResponseHeaders("X-Frame-Options");
                     i+=1;
                 }
                 if( i>=2){
-
-                    //this.cookies[kv[1]]=kv[2];
+                    this.cookies[kv[1]]=kv[2];
                 }
-
             }
-            
-        }*/
+    }*/
+
+    
+ }
 
 
 
-    }
+   
 
 
 
