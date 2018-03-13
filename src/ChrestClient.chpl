@@ -431,6 +431,8 @@ class ChrestClient{
 
     var sessions:[{1..0}]ChrestSession;
 
+    var cookiemgr:ChrestCookieSession;
+
     var formEncoded=false;
 
     proc ChrestClient(host:string, port:int){
@@ -438,8 +440,9 @@ class ChrestClient{
         this.port = port;
         this.ebase = event_base_new();
         this.con = evhttp_connection_base_new(this.ebase, c_nil, this.host.localize().c_str(), this.port:c_ushort);
-        var cookiemgr = new ChrestSession();
-        this.sessions.push_back(cookiemgr);
+        this.cookiemgr = new ChrestCookieSession();
+        
+        ///this.sessions.push_back(cookiemgr);
 
         this.allowReadResponseHeaders("Content-Length");
         this.allowReadResponseHeaders("Access-Control-Allow-Origin");
@@ -756,7 +759,12 @@ this.allowReadResponseHeaders("X-Frame-Options");
  }
 
 
-    class ChrestSession{
+    class ChrestSession{ 
+        
+        var s:string;
+        var xdom:domain(string);
+        var c:[xdom]string;
+        
         proc ChrestSession(){
 
         }
@@ -770,33 +778,30 @@ this.allowReadResponseHeaders("X-Frame-Options");
         }
     }
 
-    class ChrestCookieSession:ChrestSession{
-        
-        var ckDom:domain(string);
-
-        
-        var cookies:[ckDom]string;
+    class ChrestCookieSession{
+       
 
         proc ChrestCookieSession(){
 
         }
 
-        proc OnRequest(ref req:ClientRequest):bool{
+
+        proc OnRequest(req:ClientRequest):bool{
             return true;
         }
 
-        proc OnResponse(ref res:ClientResponse):bool{
-            var cookiestr = res.getHeader("Set-Cookie");
-               this.parseCookie(cookiestr);
+        proc OnResponse(res:ClientResponse):bool{
+            //var cookiestr = res.getHeader("Set-Cookie");
+               //this.parseCookie(cookiestr);
 
-               for s in this.ckDom{
+              /* for s in this.ckDom{
                    writeln("Cookie: ", s," = ",this.cookies[s]);
-               }
+               }*/
 
             return true;
         }
 
-        proc parseCookie(str:string){
+       /* proc parseCookie(str:string){
             var parts = str.split("; ");
             for part in parts{
                 var kv = part.split("=");
@@ -806,11 +811,13 @@ this.allowReadResponseHeaders("X-Frame-Options");
                     i+=1;
                 }
                 if( i>=2){
-                    this.cookies[kv[1]]=kv[2];
+
+                    //this.cookies[kv[1]]=kv[2];
                 }
 
             }
-        }
+            
+        }*/
 
 
 
