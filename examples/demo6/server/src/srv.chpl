@@ -36,6 +36,9 @@ proc main(){
     srv.Routes().Post("/",controller);
     srv.Routes().Get("/",controller);
     
+    
+    srv.Routes().setServeFiles(true); // allows to serve file
+    srv.Routes().setFilePath("www"); // Configure folder where the static assets re.
 
   
 

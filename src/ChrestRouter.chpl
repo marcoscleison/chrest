@@ -17,6 +17,12 @@ module ChrestRouter{
 
 use Chrest;
 use Regexp;
+use IO.FormattedIO;
+use FileSystem;
+
+    use IO;
+    use FileSystem;
+    use Path;
 
 
 
@@ -59,10 +65,19 @@ use Regexp;
         var patchRoutesDomain:domain(string);
         var patchRoutes:[patchRoutesDomain]RoutePattern;
 
+        var serveFiles:bool;
+
+        var filePath:string;
+
+        
+
         proc Router(srv)
         {
             this.srv = srv;
+            this.serveFiles=false;
+            this.filePath="public";
         }
+
         proc Handler(req:c_ptr(evhttp_request), arg:c_void_ptr)
         {
             var req_url = evhttp_request_get_uri(req);
@@ -112,6 +127,12 @@ use Regexp;
 
         proc getMiddlewares(){
            return this.middlewares;
+        }
+        proc setServeFiles(b:bool=true){
+            this.serveFiles=b;
+        }
+        proc setFilePath(path:string){
+            this.filePath =path;
         }
         
         proc Get(uri:string, controller:ChrestController)
@@ -194,16 +215,116 @@ use Regexp;
                     return;
                 }else{
                     writeln("Not match path=", path);
+
+                    
+                    found=false;
                 }
             }
             if(!found){
                 //Error controller
                 var response = new Response(this.req, this.arg);
-                response.E404();
+
+                   var (found,filename) = this.GetLoadableFileName(path);
+               var content = this.loadFileContent(filename);
+                    
+                if(!found){
+                    response.E404();
+                }else{
+                    response.Write(content);
+                    response.Send();
+                }
+
+                
                 
             }
 
         }
+
+
+ /*proc processFile(ref req:Request, ref res:Response){
+
+      try{
+       var uri= req.getUri();
+        writeln("Tring to load file", uri);
+
+
+       var (isloadable,filepath) = this.GetLoadableFileName(uri);
+       if(isloadable==true){
+         var content = this.loadFileContent(filepath);
+         res.Write(content);
+         res.Send();
+         return true;
+       }else{
+         //res.E404("Url Or File Not Found");
+         return false;
+       }
+
+      }catch{
+        return false;
+      }
+      return false;
+    }*/
+
+    proc GetLoadableFileName(uri:string):(bool,string){
+      try{
+           var fullpath = here.cwd()+"/"+this.filePath;
+
+
+      if(exists(fullpath+uri)){
+        if(isDir(fullpath+uri)){
+          if(isFile(fullpath+uri+"/index.html")){
+            
+            return (true,fullpath+uri+"/index.html");
+          
+          }else if(isFile(fullpath+uri+"/index.htm")){
+            
+            return (true,fullpath+uri+"/index.htm");
+          }else{
+            return (false,"");
+          }
+
+        }else if(isFile(fullpath+uri)){
+          return (true,fullpath+uri);
+        }else{
+          return (false,"");
+        }
+      }else{
+        return (false,"");
+      }
+        return (false,"");
+      }catch{
+        return (false,"");
+      }
+      return (false,"");
+    }
+
+    proc loadFileContent(filepath:string):string{
+      var content:string ="";
+      var fullpath = filepath;
+      try{
+          var o:syserr;
+          //var fullpath = here.cwd()+"/"+filepath;
+          writeln("Current Path=",here.cwd());
+      var f = open(fullpath, iomode.r,
+                 hints=IOHINT_RANDOM|IOHINT_CACHED|IOHINT_PARALLEL);
+      for line in f.lines() {
+         content+=line;
+      }
+        return content;
+      }catch{
+        writeln("Error on read file",fullpath);
+        return "";
+      }
+      
+     }
+
+    
+
+
+
+/****************************************************/
+
+
 
         proc processPostPathPattern(path)
         {
