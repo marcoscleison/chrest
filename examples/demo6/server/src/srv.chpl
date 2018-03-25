@@ -2,6 +2,8 @@ module Main{
 use Regexp;
 use Chrest;
 use ChrestUtils;
+use ChrestSession;
+
 const API_HOST: string = "127.0.0.1",
       API_PORT: int = 8080;
 
@@ -13,22 +15,30 @@ class MyController:ChrestController{
        try!{
        var str = randomString(12);
 
-        res.Write("Oi mundo:"+str);
-        var myregexp = compile("^/test$");
-
-        if myregexp.match("/") {
-           writeln("Does matches");
+        if(req.Session().Get("Logged")!="true"){
+            res.Write("Oi você não está logado:"+str);
+            return;
         }else{
-            writeln("Does not matches");
-        }
+            res.Write("Oi você está logado:",req.Session().getID());
 
+            return;
+        }
+        
+       
        }
     }
     //process Post Requests
     proc Post(ref req:Request,ref res:Response){
 
         var login = req.Input("login");
-        var password = req.Input("password");  
+        var password = req.Input("password"); 
+
+        if((login=="test") && (password=="password")){
+            
+            req.Session().Put("Logged","true");
+
+        }
+
         return;
     } 
     
@@ -43,7 +53,7 @@ class MyController2:ChrestController{
 
        var str = randomString(12);
 
-        res.Write("Oi index:"+str," idx = ",req.Input("id"));
+        res.Write("Oi index:"+str," idx = ",req.Param("id"));
         
     }
    
@@ -60,9 +70,10 @@ proc main(){
     var controller = new MyController();
     var controller2 = new MyController2();
     //Register routes to controller instance
-    srv.Routes().Post("/login/:id",controller);
+    srv.Routes().Post("/login",controller);
     srv.Routes().Get("/test",controller);
     srv.Routes().Get("/info/:id",controller2);
+    // Register the session Middleware with Memory session management
     srv.Routes().Middleware(new ChestMemSessionMiddleware());
         
     srv.Routes().setServeFiles(true); // allows to serve file

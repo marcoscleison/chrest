@@ -46,8 +46,7 @@ use Reflection;
         var CookieDomain: domain(string);
         var cookies:[CookieDomain]string; 
 
-        var sessionDom:domain(string);
-        var session:[sessionDom]SessionInterface;
+        var session:SessionInterface;
 
         var bodyData:string;
 
@@ -211,15 +210,13 @@ Gets Request Command Verb.
         return Helpers.getEvHttpVerb(this.req);
     }
 
-    proc addSession(key:string,sess:Session){
-        this.session[key]=sess;
+    proc Session():SessionInterface{
+        return this.session;
     }
-    proc getSession(key:string=nil):SessionInterface{
-        if(sessionDom.member(key)){
-            return this.session[key];
-        }
-        return nil;
+    proc setSession(sess){
+        this.session=sess;
     }
+
 
 
  }
