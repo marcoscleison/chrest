@@ -17,6 +17,8 @@ module ChrestRequestResponse{
 
 use Chrest;
 use ChrestRouter;
+use ChrestSession;
+
 use httpev;
 use IO.FormattedIO;
 
@@ -43,6 +45,8 @@ use Reflection;
         var queriesParams:[queriesParamsDomain]string;
         var CookieDomain: domain(string);
         var cookies:[CookieDomain]string; 
+
+        var session:SessionInterface;
 
         var bodyData:string;
 
@@ -107,6 +111,16 @@ use Reflection;
                 return this.url_params[":"+key];
             }
             return default;
+        }
+
+        proc Cookie(name:string):string{
+             //var CookieDomain: domain(string);
+          //var cookies:[CookieDomain]string;
+
+          if(CookieDomain.member(name)){
+              return this.cookies[name];
+          }
+          return ""; 
         }
 
 /*
@@ -195,6 +209,15 @@ Gets Request Command Verb.
     proc getCommand():string{
         return Helpers.getEvHttpVerb(this.req);
     }
+
+    proc Session():SessionInterface{
+        return this.session;
+    }
+    proc setSession(sess){
+        this.session=sess;
+    }
+
+
 
  }
 

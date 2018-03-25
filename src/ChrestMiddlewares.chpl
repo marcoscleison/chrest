@@ -25,113 +25,73 @@ module ChrestMiddlewares{
     use ChrestRouter;
     use ChrestRequestResponse;
 
+    use ChrestSession;
+    use ChrestUtils;
 
     class ChrestMiddleware{
-        proc handle(ref req:Request, ref res:Response):bool{
-            
+        proc handle(ref req:Request, ref res:Response):bool{  
+           writeln("Middleware:");          
             return true;
         }
     }
+
     class ChrestMiddlewareInterface{
         forwarding var middleware:ChrestMiddleware;
     }
 
-    class FileMiddleware:ChrestMiddleware{
-
-        var ROOT_PATH:string;
-        var public_dir:string;
-        proc FileMiddleware(public_dir:string="public"){
-
-        var err: syserr = ENOERR;
-
-        var cwds:string =".";
-    
-      try{
-       // cwds =locale.cwd(err);
-        if err != ENOERR then ioerror(err, "in Opening Current Server Public Path.");
-
-      }catch{
-        writeln("Cannot to open path");
-      }
-        
-
-        this.ROOT_PATH = cwds+"/"+public_dir;
-        this.public_dir = public_dir;
+  class ChestMemSessionMiddleware:ChrestMiddleware{
+      var cookie_name:string;
+      var sessionDom:domain(string);
+      var session:[sessionDom]SessionInterface;
+  
+    proc ChestMemSessionMiddleware(cookie_name:string ="SessionID"){
+      this.cookie_name = cookie_name;
+      //this.sessType = sessType;
     }
-    proc handle(ref req:Request, ref res:Response):bool{
-
-
-    
-      if(req.getCommand()=="GET"){
-         
-        return !this.processFile(req,res);
-      }
-
-      return true;
-    }
-
-    proc processFile(ref req:Request, ref res:Response){
-
-      try{
-       var uri= req.getUri();
-        writeln("Tring to load file", uri);
-
-
-       var (isloadable,filepath) = this.GetLoadableFileName(uri);
-       if(isloadable==true){
-         var content = this.loadFileContent(filepath);
-         res.Write(content);
-         res.Send();
-         return true;
-       }else{
-         //res.E404("Url Or File Not Found");
-         return false;
-       }
-
-      }catch{
-        return false;
-      }
-      return false;
-    }
-
-    proc GetLoadableFileName(uri:string):(bool,string){
-      try{
-      if(exists(this.ROOT_PATH+uri)){
-        if(isDir(this.ROOT_PATH+uri)){
-          if(isFile(this.ROOT_PATH+uri+"/index.html")){
-            return (true,this.ROOT_PATH+uri+"/index.html");
-          }else{
-            return (false,"");
+     proc handle(ref req:Request, ref res:Response):bool{
+          //var id = randomString(12);
+          //writeln("SessionID:"+id);
+          var id = req.Cookie(this.cookie_name);
+          writeln("Cookie id:",id);
+          if(id==""){
+            writeln("Session not found");
+            var sess =  this.newSession();
+            res.SetCookie(this.cookie_name, sess.getID());
+            req.setSession(sess);
+            return true;
           }
-        }else if(isFile(this.ROOT_PATH+uri)){
-          return (true,this.ROOT_PATH+uri);
-        }else{
-          return (false,"");
+          if(sessionDom.member(id)){
+            var sess = this.session[id];
+            req.setSession(sess);
+          }else{
+            writeln("Session id not found");
+            var sess =  this.newSession();
+            res.SetCookie(this.cookie_name, sess.getID());
+            req.setSession(sess);
+          }
+          
+          return true;
+      }
+
+      proc newSession(key:string=""){
+        var sesst = new MemorySession();
+        var sess = new SessionInterface(sesst);
+        if(key==""){  
+          this.session[sess.getID()]=sess;
+          return sess;
         }
-      }else{
-        return (false,"");
+        sess.setID(key);
+        this.session[sess.getID()]=sess;
+        return sess;
       }
-        return (false,"");
-      }catch{
-        return (false,"");
-      }
-      return (false,"");
+
+     proc getSession(key:string=nil):SessionInterface{
+        if(sessionDom.member(key)){
+            return this.session[key];
+        }
+        return nil;
     }
 
-    proc loadFileContent(filepath:string):string{
-      var content:string ="";
-      try{
-      var f = open(filepath, iomode.r,
-                 hints=IOHINT_RANDOM|IOHINT_CACHED|IOHINT_PARALLEL);
-      for line in f.lines() {
-         content+=line;
-      }
-        return content;
-      }catch{
-        return "";
-      }
-      
-     }
+  }
 
-    }
 }

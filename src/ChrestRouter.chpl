@@ -201,11 +201,13 @@ use FileSystem;
             for idx in this.getRoutesDomain{
                 var route = this.getRoutes[idx];            
                 if(route.Matched(path)){
+                    writeln("Mathed path =",path," idx=",idx);
 
                     var params = route.getUrlParams(path);
                     var request = new Request(this.req,this.arg,params);
                     var response = new Response(this.req, arg);
                     if(!this.runMiddleWares(request,response)){
+                          found=true;
                         return;
                     }
                     route.CallGetController(path, request, response);
@@ -224,8 +226,8 @@ use FileSystem;
                 //Error controller
                 var response = new Response(this.req, this.arg);
 
-                   var (found,filename) = this.GetLoadableFileName(path);
-               var content = this.loadFileContent(filename);
+                var (found,filename) = this.GetLoadableFileName(path);
+                var content = this.loadFileContent(filename);
                     
                 if(!found){
                     response.E404();
@@ -336,9 +338,9 @@ use FileSystem;
                    var params = route.getUrlParams(path);
                     var request = new Request(this.req,this.arg,params);
                     var response = new Response(this.req, arg);
-                    /*if(!this.runMiddleWares(request,response)){
+                    if(!this.runMiddleWares(request,response)){
                         return;
-                    }*/
+                    }
 
                     route.CallPostController(path, request, response);
                     found=true;
@@ -597,7 +599,7 @@ use FileSystem;
             this.route = route;
             this.router = router;
 
-            this.pattern = this.patternToRegex(this.route);
+            this.pattern = "^"+this.patternToRegex(this.route);
             try{
                 this.r = compile(this.pattern);
             }catch{
@@ -634,12 +636,23 @@ use FileSystem;
             try{
                 var match = this.r.search(url);
                 var sm = url[match];
+
+                 writeln("patthern ",this.pattern);
+
+                 if(!this.r.match(url)){
+                    writeln("Does not match ",url);
+                    return false;
+                }
+
                
                 var smm = sm + "/";
                 if (smm == url)
                 {
                     return true;
                 }
+
+               
+
                 if (sm == url)
                 {
                     return true;
@@ -647,6 +660,7 @@ use FileSystem;
                 return false;
             }catch{
                 writeln("Error to find url pattern");
+                return false;
                 
             }
             return false;
@@ -720,9 +734,9 @@ use FileSystem;
                 
         proc CallPostController(path:string,ref request:Request, ref response:Response){
                      
-            /*if(!this.runMiddleWares(request,response)){
+            if(!this.runMiddleWares(request,response)){
                 return;
-            }*/
+            }
 
             writeln("Calling post");
 
