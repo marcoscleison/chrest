@@ -298,6 +298,10 @@ proc SendJson(obj:?eltType,code:int=HTTP_OK,motiv:string="OK"){
     this.Write(str);
     this.Send(500,str);
   }
+  proc Redirect(to:string, code:int=302){
+      this.AddHeader("Location",to);
+      this.Send(code,"Found");
+  }
 
   proc isError():bool{
     return this.http_code >= 400;
@@ -317,18 +321,7 @@ TODO: Add options.
     //Set-Cookie: sessionid=38afes7a8; httponly; Path=/
       this.AddHeader("Set-Cookie", key+"="+value+"; httponly; Path="+path);
   } 
-  /*proc SetCookie(value:[?D]string, path:string ="/"){
-    //Set-Cookie: sessionid=38afes7a8; httponly; Path=/
-    var val:string;
-    var i=0;
-    for key in D{
-        val += key + "=" + value[key]+";";
-        i+=1;
-    }
-    
 
-      this.AddHeader("Set-Cookie", val+" httponly; Path="+path);
-  } */
 
 }
 

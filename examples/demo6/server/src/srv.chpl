@@ -7,7 +7,6 @@ use ChrestSession;
 const API_HOST: string = "127.0.0.1",
       API_PORT: int = 8080;
 
-    
 
 class MyController:ChrestController{
     // process Get requests
@@ -16,7 +15,8 @@ class MyController:ChrestController{
        var str = randomString(12);
 
         if(req.Session().Get("Logged")!="true"){
-            res.Write("Oi você não está logado:"+str);
+            //res.Write("Oi você não está logado:"+str);
+            res.Redirect("/");
             return;
         }else{
             res.Write("Oi você está logado:",req.Session().getID());
@@ -36,6 +36,7 @@ class MyController:ChrestController{
         if((login=="test") && (password=="password")){
             
             req.Session().Put("Logged","true");
+            res.Redirect("/test");
 
         }
 
