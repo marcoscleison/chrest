@@ -10,22 +10,6 @@ use SysError;
 use  DateTime;
 
 
-proc datetime.readWriteThis(f) {
-  var dash  = new ioLiteral("-"),
-      colon = new ioLiteral(":");
-  f <~> new ioLiteral("{") <~> chpl_date.chpl_year <~> dash
-    <~> chpl_date.chpl_month <~> dash <~> chpl_date.chpl_day
-    <~> new ioLiteral(" ") <~> chpl_time.chpl_hour <~> colon
-    <~> chpl_time.chpl_minute <~> colon <~> chpl_time.chpl_second
-    <~> new ioLiteral(".") <~> chpl_time.chpl_microsecond
-    <~> new ioLiteral("}");
-}
-
-
- 
-
-
-
 
 //Callback router for the responses
 proc response_cb(req:c_ptr(evhttp_request), arg:c_void_ptr){
