@@ -136,9 +136,8 @@ Parses the body of POST,PUT etc. requests
     proc ParseBody(){
         var len = evbuffer_get_length(this.buffer);
         var data = c_calloc(uint(8), (len+1):size_t);
-        evbuffer_copyout(this.buffer, data, len);
-        var dados = new string(buff=data, length=len, size=len+1, owned=true, needToCopy=false);
-        
+        evbuffer_copyout(this.buffer, data, len);     
+        var dados = new string(data, len, len+1, true, false);   
         this.bodyData = dados;
 
         writeln("Body =",this.bodyData);
