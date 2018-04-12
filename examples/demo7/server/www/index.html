@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js"></script>
+
+
+  <script>
+    //var socket = new WebSocket("ws://" + document.domain + ':' + location.port, "example-protocol");
+
+    function update(msg) {
+      document.getElementById("num").innerHTML = msg;
+    }
+
+    function update2(msg) {
+      document.getElementById("num2").innerHTML += msg + "<br>";
+    }
+
+
+    function ChrestWs(addr) {
+      this.addr = addr;
+      this.protocol = "chrest-pubsub";
+      this.channels = [];
+      this.connected = false;
+      this.socket = null;
+      console.log("socket", this.socket);
+      var $this = this;
+      this.connectedcb = [];
+      this.disconnectedcb = [];
+      this.datacb = [];
+
+      this.Connect = function (concb) {
+        $this.socket = new WebSocket($this.addr, $this.protocol);
+
+
+
+        $this.socket.onopen = function () {
+          for (index = 0; index < $this.connectedcb.length; ++index) {
+            var cb = $this.connectedcb[index];
+            cb($this);
+          }
+
+          console.log("socket open%");
+          $this.connected = true;
+          //update2("open");
+          concb($this);
+        };
+
+
+
+        $this.socket.onclose = function () {
+          console.log("Close");
+          $this.connected = false;
+          for (var index = 0; index < $this.disconnectedcb.length; ++index) {
+            var cb = $this.disconnectedcb[index];
+            cb($this);
+          }
+        };
+
+        $this.socket.onmessage = function (msg) {
+          console.log("On message");
+          // for (var index = 0; index < $this.datacb.length; ++index) {
+          //   var cb = $this.datacb[index];
+          //   cb(msg);
+          // }
+          try {
+            console.log("On message2");
+            var wsCMD = JSON.parse(msg.data);
+            var index;
+            for (index = 0; index < $this.channels.length; ++index) {
+              console.log("On message3");
+              var channel = $this.channels[index];
+              if (wsCMD.channel == channel.channel) {
+                console.log("On message4");
+                var data = JSON.parse(wsCMD.data);
+                var jdata = [];
+                for (idx = 0; idx < data.length; ++idx) {
+                  jdata.push(JSON.parse(data[idx]));
+                  console.log("On message5");
+                }
+
+                channel.cb($this, jdata, wsCMD);
+              }
+            }
+
+          } catch (error) {
+            console.error(error);
+          }
+        };
+
+      }; //fim connect
+
+      this.OnConnect = function (cb) {
+        if (cb != null) {
+          $this.connectedcb.push(cb);
+        }
+      };
+      this.OnDisconnect = function (cb) {
+        if (cb != null) {
+          $this.disconnectedcb.push(cb);
+        }
+      };
+
+      this.OnData = function (cb) {
+        if (cb != null) {
+          $this.datacb.push(cb);
+        }
+      };
+
+
+
+      this.Subscribe = function (channel, cb) {
+        var i = 0;
+        if (cb != null) {
+          $this.channels.push({
+            channel: channel,
+            cb: cb
+          });
+        }
+        var cmd = JSON.stringify({
+          channel: channel,
+          cmd: 'subscribe',
+          data: ''
+        });
+        console.log("Subscribing to ", channel);
+        $this.socket.send(cmd);
+      };
+
+      this.Publish = function (channel, obj) {
+        try {
+          var data = JSON.stringify(obj);
+
+          var wsCMD = {
+            channel: channel,
+            cmd: 'publish',
+            data: data
+          };
+          var cmd = JSON.stringify(wsCMD);
+
+          if (($this.connected == true) && ($this.socket != null)) {
+            $this.socket.send(cmd);
+          } else {
+
+            throw new Error("Cannot publish to " + channel + " websocket not connected");
+          }
+
+        } catch (error) {
+          console.error(error);
+        }
+
+      };
+
+
+
+    } //end function
+  </script>
+
+</head>
+<title>Websocket example</title>
+
+
+<body>
+
+  <div id="sine-graph" style="width: 400px; height: 400px;">
+
+    <p id="num"></p>
+
+    <p id="num2"></p>
+
+    <script>
+      var conn = new ChrestWs("ws://" + document.domain + ':' + 8000);
+
+      var datax = [];
+      var datay = [];
+
+      conn.Connect(function (ws) {
+        console.log("Connected");
+        console.log(ws);
+        ws.Subscribe("data", function ($this, datum, cmd) {
+          update2(datum);
+
+          var index;
+          for (index = 0; index < datum.length; ++index) {
+            var p = datum[index];
+            console.log("+ = ", p);
+            datax.push(p.x);
+            datay.push(p.y);
+
+          }
+          var my_plot = {
+            x: datax,
+            y: datay,
+            type: 'scatter',
+          };
+          Plotly.newPlot('sine-graph', [my_plot]);
+
+          console.log("#data cb1", datum[0], " ");
+          //$this.Publish("log", "Received " + datum);
+        });
+
+        ws.Subscribe("log", function ($this, datum, cmd) {
+          //update2(datum);
+          //console.log("Log ", datum);
+        });
+
+        var myVar = setInterval(myTimer, 1000);
+        var x=0.0;
+        var y=0.0;
+
+        function myTimer() {
+          x++;
+          y= Math.cos(x/10); 
+          
+          ws.Publish("data",{
+            x:x,
+            y:y
+          });
+            
+        }
+
+
+
+
+      });
+    </script>
+</body>
+
+</html>
