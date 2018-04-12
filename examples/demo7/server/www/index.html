@@ -17,7 +17,7 @@
       document.getElementById("num2").innerHTML += msg + "<br>";
     }
 
-
+//Class that deals with websocket 
     function ChrestWs(addr) {
       this.addr = addr;
       this.protocol = "chrest-pubsub";
@@ -174,9 +174,12 @@
       var datax = [];
       var datay = [];
 
+      //connects to websoket server and call the callback when it is connected
       conn.Connect(function (ws) {
         console.log("Connected");
         console.log(ws);
+
+        //subscribe "data" channel and call the callback when data arrives.
         ws.Subscribe("data", function ($this, datum, cmd) {
           update2(datum);
 
@@ -211,6 +214,7 @@
         function myTimer() {
           x++;
           y= Math.cos(x/10); 
+          //Send to the server some points. 
           
           ws.Publish("data",{
             x:x,
