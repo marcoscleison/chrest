@@ -17,5 +17,21 @@ proc randomString(size:int, dicts:string="01234567890abcdefghijklmnopqrstuwvxyzA
     return str;
 }
 
+proc jsonToObject(str:string, type eltType):eltType{
+    try{
+        var obj = new eltType();
+        var mem = openmem();
+        var writer = mem.writer().write(str);
+        var reader = mem.reader();
+        reader.readf("%jt", obj);
+        return obj;
+
+    }catch{
+        writeln("Could not convert json to object");
+        return new eltType();
+    }
+
+}
+
 
 }

@@ -1,0 +1,671 @@
+module websocket{
+use SysCTypes;
+require "event2/event.h", "-levent";
+
+
+extern "struct lhash_st_ERR_STRING_DATA" record lhash_st_ERR_STRING_DATA{
+}
+
+extern proc  ERR_get_string_table(_struct lhash_st_ERR_STRING_DATA: lhash_st_ERR_STRING_DATA ):c_ptr(lhash_st_ERR_STRING_DATA );
+extern "struct lhash_st_ERR_STATE" record lhash_st_ERR_STATE{
+}
+
+extern proc  ERR_get_err_state_table(_struct lhash_st_ERR_STATE: lhash_st_ERR_STATE ):c_ptr(lhash_st_ERR_STATE );
+extern proc  ERR_release_err_state_table(hash: c_ptr(lhash_st_ERR_STATE ) ):c_void_ptr;
+extern proc  ERR_get_next_error_library():c_int;
+extern proc  ERR_set_mark():c_int;
+extern proc  ERR_pop_to_mark():c_int;
+extern proc  ERR_get_implementation(_ERR_FNS: ERR_FNS ):c_ptr( ERR_FNS );
+extern proc  ERR_set_implementation(fns: c_ptr( ERR_FNS ) ):c_int;
+extern proc  _lws_log(_args2: , filter: c_int, format: c_string ):c_void_ptr;
+extern proc  _lws_logv(filter: c_int, format: c_string, vl: va_list ):c_void_ptr;
+extern proc  lwsl_timestamp(level: c_int, p: c_ptr(c_char), len: c_int ):c_int;
+extern proc  lwsl_hexdump_level(level: c_int, vbuf: c_ptr( void ), len: c_int ):c_void_ptr;
+extern proc  lwsl_hexdump(buf: c_ptr( void ), len: c_int ):c_void_ptr;
+extern proc  lws_is_be(_args1:  ):c_int;
+extern proc  lws_set_log_level(level: c_int, log_emit_function: c_ptr(void ()(int, const char )) ):c_void_ptr;
+extern proc  lwsl_emit_syslog(level: c_int, line: c_string ):c_void_ptr;
+extern proc  lwsl_visible(level: c_int ):c_int;
+extern "struct lws" record lws{
+}
+
+extern record lws_usec_t{
+}
+
+extern record lws_sockfd_type{
+}
+
+extern record lws_filefd_type{
+}
+
+extern record lws_filepos_t{
+}
+
+extern record lws_fileofs_t{
+}
+
+extern record lws_fop_flags_t{
+}
+
+extern "struct lws_pollargs" record lws_pollargs{
+	var fd: lws_sockfd_type;
+	var events: c_int;
+	var prev_events: c_int;
+}
+
+extern "struct lws_tokens" record lws_tokens{
+}
+
+extern "struct lws_token_limits" record lws_token_limits{
+}
+
+extern proc  lws_close_reason(wsi: c_ptr(lws ), status: enum lws_close_status, buf: c_ptr(c_uchar), len: c_int ):c_void_ptr;
+extern "struct lws" record lws{
+}
+
+extern "struct lws_context" record lws_context{
+}
+
+extern "struct lws_extension" record lws_extension{
+}
+
+extern "struct lws_ssl_info" record lws_ssl_info{
+	var where: c_int;
+	var ret: c_int;
+}
+
+extern "struct lws_acme_cert_aging_args" record lws_acme_cert_aging_args{
+	var lws_vhost: lws_vhost;
+	var vh: c_ptr(lws_vhost );
+	var element_overrides: c_ptr( char [10]);
+}
+
+extern record lws_callback_function{
+}
+
+extern "struct lws_vhost" record lws_vhost{
+}
+
+extern "struct lws_genhash_ctx" record lws_genhash_ctx{
+	var type: uint8_t;
+	var evp_type: c_ptr( EVP_MD );
+	var mdctx: c_ptr(EVP_MD_CTX );
+}
+
+extern "struct lws_genhmac_ctx" record lws_genhmac_ctx{
+	var type: uint8_t;
+	var evp_type: c_ptr( EVP_MD );
+	var ctx: c_ptr(EVP_MD_CTX );
+}
+
+extern proc  lws_genhash_init(_args1: , default: , ctx: c_ptr(lws_genhash_ctx ), type: enum lws_genhash_types ):c_int;
+extern proc  lws_genhash_update(_args1: , default: , ctx: c_ptr(lws_genhash_ctx ), in: c_ptr( void ), len: c_int ):c_int;
+extern proc  lws_genhash_destroy(ctx: c_ptr(lws_genhash_ctx ), result: c_void_ptr ):c_int;
+extern proc  lws_genhmac_init(type: enum lws_genhmac_types, key: c_ptr( uint8_t ), key_len: c_int ):c_int;
+extern proc  lws_genhmac_update(in: c_ptr( void ), len: c_int ):c_int;
+extern proc  lws_genhmac_destroy(result: c_void_ptr ):c_int;
+extern "struct lws_genrsa_ctx" record lws_genrsa_ctx{
+	var bn: c_ptr(BIGNUM [8]);
+	var rsa: c_ptr(RSA );
+}
+
+extern "struct lws_genrsa_element" record lws_genrsa_element{
+	var buf: c_ptr(uint8_t );
+	var len: uint16_t;
+}
+
+extern "struct lws_genrsa_elements" record lws_genrsa_elements{
+	var e: lws_genrsa_element [8];
+}
+
+extern proc  lws_jwk_destroy_genrsa_elements(el: c_ptr(lws_genrsa_elements ) ):c_void_ptr;
+extern proc  lws_genrsa_create(ctx: c_ptr(lws_genrsa_ctx ), el: c_ptr(lws_genrsa_elements ) ):c_int;
+extern proc  lws_genrsa_new_keypair(context: c_ptr(lws_context ), ctx: c_ptr(lws_genrsa_ctx ), el: c_ptr(lws_genrsa_elements ), bits: c_int ):c_int;
+extern proc  lws_genrsa_public_decrypt(ctx: c_ptr(lws_genrsa_ctx ), in: c_ptr( uint8_t ), in_len: c_int, out: c_ptr(uint8_t ), out_max: c_int ):c_int;
+extern proc  lws_genrsa_public_verify(ctx: c_ptr(lws_genrsa_ctx ), in: c_ptr( uint8_t ), hash_type: enum lws_genhash_types, sig: c_ptr( uint8_t ), sig_len: c_int ):c_int;
+extern proc  lws_genrsa_public_sign(ctx: c_ptr(lws_genrsa_ctx ), in: c_ptr( uint8_t ), hash_type: enum lws_genhash_types, sig: c_ptr(uint8_t ), sig_len: c_int ):c_int;
+extern proc  lws_genrsa_destroy(ctx: c_ptr(lws_genrsa_ctx ) ):c_void_ptr;
+extern proc  lws_genrsa_render_pkey_asn1(ctx: c_ptr(lws_genrsa_ctx ), _private: c_int, pkey_asn1: c_ptr(uint8_t ), pkey_asn1_len: c_int ):c_int;
+extern "struct lws_jwk" record lws_jwk{
+	var keytype: char [5];
+	var el: lws_genrsa_elements;
+}
+
+extern proc  lws_jwk_import(s: c_ptr(lws_jwk ), in: c_string, len: c_int ):c_int;
+extern proc  lws_jwk_destroy(s: c_ptr(lws_jwk ) ):c_void_ptr;
+extern proc  lws_jwk_export(s: c_ptr(lws_jwk ), _private: c_int, p: c_ptr(c_char), len: c_int ):c_int;
+extern proc  lws_jwk_load(s: c_ptr(lws_jwk ), filename: c_string ):c_int;
+extern proc  lws_jwk_save(s: c_ptr(lws_jwk ), filename: c_string ):c_int;
+extern proc  lws_jwk_rfc7638_fingerprint(s: c_ptr(lws_jwk ), digest32: c_ptr(c_char) ):c_int;
+extern proc  lws_jws_confirm_sig(in: c_string, len: c_int, jwk: c_ptr(lws_jwk ) ):c_int;
+extern proc  lws_jws_sign_from_b64(b64_hdr: c_string, hdr_len: c_int, b64_pay: c_string, pay_len: c_int, b64_sig: c_ptr(c_char), sig_len: c_int, hash_type: enum lws_genhash_types, jwk: c_ptr(lws_jwk ) ):c_int;
+extern proc  lws_jws_create_packet(jwk: c_ptr(lws_jwk ), payload: c_string, len: c_int, nonce: c_string, out: c_ptr(c_char), out_len: c_int ):c_int;
+extern proc  lws_jws_base64_enc(in: c_string, in_len: c_int, out: c_ptr(c_char), out_max: c_int ):c_int;
+extern "struct lws_ext_options" record lws_ext_options{
+	var name: c_string;
+	var type: enum lws_ext_options_types;
+}
+
+extern "struct lws_ext_option_arg" record lws_ext_option_arg{
+	var option_name: c_string;
+	var option_index: c_int;
+	var start: c_string;
+	var len: c_int;
+}
+
+extern record lws_extension_callback_function{
+}
+
+extern "struct lws_extension" record lws_extension{
+	var name: c_string;
+	var callback: c_ptr(lws_extension_callback_function );
+	var client_offer: c_string;
+}
+
+extern proc  lws_set_extension_option(wsi: c_ptr(lws ), ext_name: c_string, opt_name: c_string, opt_val: c_string ):c_int;
+extern proc  lws_extension_callback_pm_deflate(ext: c_ptr( lws_extension ), wsi: c_ptr(lws ), reason: enum lws_extension_callback_reasons, user: c_void_ptr, in: c_void_ptr, len: c_int ):c_int;
+extern "struct lws_protocols" record lws_protocols{
+	var name: c_string;
+	var callback: c_ptr(lws_callback_function );
+	var per_session_data_size: c_int;
+	var rx_buffer_size: c_int;
+	var id: c_uint;
+	var user: c_void_ptr;
+	var tx_packet_size: c_int;
+}
+
+extern proc  lws_vhost_name_to_protocol(_struct lws_protocols: lws_protocols, vh: c_ptr(lws_vhost ), name: c_string ):c_ptr( lws_protocols );
+extern proc  lws_get_protocol(_struct lws_protocols: lws_protocols, wsi: c_ptr(lws ) ):c_ptr( lws_protocols );
+extern proc  lws_protocol_get(_args2: , _struct lws_protocols: lws_protocols, wsi: c_ptr(lws ) ):c_ptr( lws_protocols );
+extern proc  lws_protocol_vh_priv_zalloc(vhost: c_ptr(lws_vhost ), prot: c_ptr( lws_protocols ), size: c_int ):c_void_ptr;
+extern proc  lws_protocol_vh_priv_get(vhost: c_ptr(lws_vhost ), prot: c_ptr( lws_protocols ) ):c_void_ptr;
+extern proc  lws_adjust_protocol_psds(wsi: c_ptr(lws ), new_size: c_int ):c_void_ptr;
+extern proc  lws_finalize_startup(context: c_ptr(lws_context ) ):c_int;
+extern "struct lws_protocol_vhost_options" record lws_protocol_vhost_options{
+}
+
+extern proc  lws_pvo_search(_struct lws_protocol_vhost_options: lws_protocol_vhost_options, pvo: c_ptr( lws_protocol_vhost_options ), name: c_string ):c_ptr( lws_protocol_vhost_options );
+extern proc  lws_protocol_init(context: c_ptr(lws_context ) ):c_int;
+extern record lwsgw_hash_bin{
+}
+
+extern record lwsgw_hash{
+}
+
+extern "struct lws_session_info" record lws_session_info{
+	var username: char [32];
+	var email: char [100];
+	var ip: char [72];
+	var mask: c_uint;
+	var session: char [42];
+}
+
+extern "struct lws_gs_event_args" record lws_gs_event_args{
+	var event:lws_gs_event;
+	var username: c_string;
+	var email: c_string;
+}
+
+extern "struct lws_plat_file_ops" record lws_plat_file_ops{
+}
+
+extern "struct lws_context_creation_info" record lws_context_creation_info{
+	var port: c_int;
+	var iface: c_string;
+	//var protocols: c_ptr(lws_protocols);
+	var extensions: c_ptr(lws_extension );
+	var token_limits: c_ptr(lws_token_limits );
+	var ssl_private_key_password: c_string;
+	var ssl_cert_filepath: c_string;
+	var ssl_private_key_filepath: c_string;
+	var ssl_ca_filepath: c_string;
+	var ssl_cipher_list: c_string;
+	var http_proxy_address: c_string;
+	var http_proxy_port: c_uint;
+	var gid: c_int;
+	var uid: c_int;
+	var options: c_uint;
+	var user: c_void_ptr;
+	var ka_time: c_int;
+	var ka_probes: c_int;
+	var ka_interval: c_int;
+	//var provided_client_ssl_ctx: c_ptr(SSL_CTX );
+	var max_http_header_data: c_short;
+	var max_http_header_pool: c_short;
+	var count_threads: c_uint;
+	var fd_limit_per_thread: c_uint;
+	var timeout_secs: c_uint;
+	var ecdh_curve: c_string;
+	var vhost_name: c_string;
+	var plugin_dirs: c_ptr(c_string);
+	//var pvo: c_ptr(lws_protocol_vhost_options );
+	var keepalive_timeout: c_int;
+	var log_filepath: c_string;
+	//var lws_http_mount: lws_http_mount;
+	//var mounts: c_ptr(lws_http_mount );
+	var server_string: c_string;
+	var pt_serv_buf_size: c_uint;
+	var max_http_header_data2: c_uint;
+	var ssl_options_set: c_long;
+	var ssl_options_clear: c_long;
+	var ws_ping_pong_interval: c_ushort;
+	//var headers: c_ptr( lws_protocol_vhost_options );
+	//var reject_service_keywords: c_ptr( lws_protocol_vhost_options );
+	var external_baggage_free_on_destroy: c_void_ptr;
+	var client_ssl_private_key_password: c_string;
+	var client_ssl_cert_filepath: c_string;
+	var client_ssl_private_key_filepath: c_string;
+	var client_ssl_ca_filepath: c_string;
+	var client_ssl_cipher_list: c_string;
+	var fops: c_ptr( lws_plat_file_ops );
+	var simultaneous_ssl_restriction: c_int;
+	var socks_proxy_address: c_string;
+	var socks_proxy_port: c_uint;
+	var bind_iface: c_int;
+	var ssl_info_event_mask: c_int;
+	var timeout_secs_ah_idle: c_uint;
+	var ip_limit_ah: c_ushort;
+	var ip_limit_wsi: c_ushort;
+	//var http2_settings: uint32_t [7];
+	var error_document_404: c_string;
+	var _unused: c_void_ptr;
+}
+
+extern proc  lws_create_context(_struct lws_context: lws_context, info: c_ptr(lws_context_creation_info ) ):c_ptr(lws_context );
+extern proc  lws_context_destroy(context: c_ptr(lws_context ) ):c_void_ptr;
+extern proc  lws_context_destroy2(context: c_ptr(lws_context ) ):c_void_ptr;
+extern record lws_reload_func{
+}
+
+extern proc  lws_context_deprecate(context: c_ptr(lws_context ), cb: lws_reload_func ):c_void_ptr;
+extern proc  lws_context_is_deprecated(context: c_ptr(lws_context ) ):c_int;
+extern proc  lws_set_proxy(vhost: c_ptr(lws_vhost ), proxy: c_string ):c_int;
+extern proc  lws_set_socks(vhost: c_ptr(lws_vhost ), socks: c_string ):c_int;
+extern "struct lws_vhost" record lws_vhost{
+}
+
+extern proc  lws_create_vhost(_struct lws_vhost: lws_vhost, context: c_ptr(lws_context ), info: c_ptr(lws_context_creation_info ) ):c_ptr(lws_vhost );
+extern proc  lws_vhost_destroy(vh: c_ptr(lws_vhost ) ):c_void_ptr;
+extern proc  lwsws_get_config_globals(info: c_ptr(lws_context_creation_info ), d: c_string, config_strings: c_ptr(char ), len: c_ptr(c_int) ):c_int;
+extern proc  lwsws_get_config_vhosts(context: c_ptr(lws_context ), info: c_ptr(lws_context_creation_info ), d: c_string, config_strings: c_ptr(char ), len: c_ptr(c_int) ):c_int;
+extern proc  lws_vhost_get(_args2: , _struct lws_vhost: lws_vhost, wsi: c_ptr(lws ) ):c_ptr(lws_vhost );
+extern proc  lws_get_vhost(_struct lws_vhost: lws_vhost, wsi: c_ptr(lws ) ):c_ptr(lws_vhost );
+extern proc  lws_get_vhost_name(vhost: c_ptr(lws_vhost ) ):c_string;
+extern proc  lws_get_vhost_port(vhost: c_ptr(lws_vhost ) ):c_int;
+extern proc  lws_get_vhost_user(vhost: c_ptr(lws_vhost ) ):c_void_ptr;
+extern proc  lws_get_vhost_iface(vhost: c_ptr(lws_vhost ) ):c_string;
+extern proc  lws_json_dump_vhost(vh: c_ptr( lws_vhost ), buf: c_ptr(c_char), len: c_int ):c_int;
+extern proc  lws_json_dump_context(context: c_ptr( lws_context ), buf: c_ptr(c_char), len: c_int, hide_vhosts: c_int ):c_int;
+extern proc  lws_vhost_user(vhost: c_ptr(lws_vhost ) ):c_void_ptr;
+extern proc  lws_context_user(context: c_ptr(lws_context ) ):c_void_ptr;
+extern "struct lws_protocol_vhost_options" record lws_protocol_vhost_options{
+	var next: c_ptr( lws_protocol_vhost_options );
+	var options: c_ptr( lws_protocol_vhost_options );
+	var name: c_string;
+	var value: c_string;
+}
+
+extern "struct lws_http_mount" record lws_http_mount{
+	var mount_next: c_ptr( lws_http_mount );
+	var mountpoint: c_string;
+	var origin: c_string;
+	var def: c_string;
+	var protocol: c_string;
+	var cgienv: c_ptr( lws_protocol_vhost_options );
+	var extra_mimetypes: c_ptr( lws_protocol_vhost_options );
+	var interpret: c_ptr( lws_protocol_vhost_options );
+	var cgi_timeout: c_int;
+	var cache_max_age: c_int;
+	var auth_mask: c_uint;
+	var cache_reusable: c_uint;
+	var cache_revalidate: c_uint;
+	var cache_intermediaries: c_uint;
+	var origin_protocol: c_uchar;
+	var mountpoint_len: c_uchar;
+	var basic_auth_login_file: c_string;
+	var _unused: c_ptr(void [2]);
+}
+
+extern "struct lws_client_connect_info" record lws_client_connect_info{
+	var context: c_ptr(lws_context );
+	var address: c_string;
+	var port: c_int;
+	var ssl_connection: c_int;
+	var path: c_string;
+	var host: c_string;
+	var origin: c_string;
+	var protocol: c_string;
+	var ietf_version_or_minus_one: c_int;
+	var userdata: c_void_ptr;
+	var client_exts: c_ptr( void );
+	var method: c_string;
+	var parent_wsi: c_ptr(lws );
+	var uri_replace_from: c_string;
+	var uri_replace_to: c_string;
+	var vhost: c_ptr(lws_vhost );
+	var pwsi: c_ptr(lws );
+	var iface: c_string;
+	var local_protocol_name: c_string;
+	var _unused: c_ptr(void [4]);
+}
+
+extern proc  lws_client_connect_via_info(_struct lws: lws, ccinfo: c_ptr(lws_client_connect_info ) ):c_ptr(lws );
+extern proc  lws_client_connect(_args2: , _args3: , _struct lws: lws, clients: c_ptr(lws_context ), address: c_string, port: c_int, ssl_connection: c_int, path: c_string, host: c_string, origin: c_string, protocol: c_string, ietf_version_or_minus_one: c_int ):c_ptr(lws );
+extern proc  lws_client_connect_extended(_args2: , _args3: , _struct lws: lws, clients: c_ptr(lws_context ), address: c_string, port: c_int, ssl_connection: c_int, path: c_string, host: c_string, origin: c_string, protocol: c_string, ietf_version_or_minus_one: c_int, userdata: c_void_ptr ):c_ptr(lws );
+extern proc  lws_init_vhost_client_ssl(info: c_ptr( lws_context_creation_info ), vhost: c_ptr(lws_vhost ) ):c_int;
+extern proc  lws_http_client_read(wsi: c_ptr(lws ), buf: c_ptr(char ), len: c_ptr(c_int) ):c_int;
+extern proc  lws_http_client_http_response(wsi: c_ptr(lws ) ):c_uint;
+extern proc  lws_client_http_body_pending(wsi: c_ptr(lws ), something_left_to_send: c_int ):c_void_ptr;
+extern proc  lws_service(context: c_ptr(lws_context ), timeout_ms: c_int ):c_int;
+extern proc  lws_service_tsi(context: c_ptr(lws_context ), timeout_ms: c_int, tsi: c_int ):c_int;
+extern proc  lws_cancel_service_pt(wsi: c_ptr(lws ) ):c_void_ptr;
+extern proc  lws_cancel_service(context: c_ptr(lws_context ) ):c_void_ptr;
+extern proc  lws_service_fd(context: c_ptr(lws_context ), pollfd: c_ptr(pollfd ) ):c_int;
+extern proc  lws_service_fd_tsi(context: c_ptr(lws_context ), pollfd: c_ptr(pollfd ), tsi: c_int ):c_int;
+extern proc  lws_service_adjust_timeout(context: c_ptr(lws_context ), timeout_ms: c_int, tsi: c_int ):c_int;
+extern proc  lws_handle_POLLOUT_event(wsi: c_ptr(lws ), pollfd: c_ptr(pollfd ) ):c_int;
+extern proc  lws_get_mimetype(file: c_string, m: c_ptr( lws_http_mount ) ):c_string;
+extern proc  lws_serve_http_file(wsi: c_ptr(lws ), file: c_string, content_type: c_string, other_headers: c_string, other_headers_len: c_int ):c_int;
+extern proc  lws_serve_http_file_fragment(wsi: c_ptr(lws ) ):c_int;
+extern "struct lws_process_html_args" record lws_process_html_args{
+	var p: c_ptr(c_char);
+	var len: c_int;
+	var max_len: c_int;
+	var final: c_int;
+	var chunked: c_int;
+}
+
+extern record lws_process_html_state_cb{
+}
+
+extern "struct lws_process_html_state" record lws_process_html_state{
+	var start: c_ptr(c_char);
+	var swallow: char [16];
+	var pos: c_int;
+	var data: c_void_ptr;
+	var vars: c_ptr(c_string );
+	var count_vars: c_int;
+	var replace: lws_process_html_state_cb;
+}
+
+extern proc  lws_chunked_html_process(args: c_ptr(lws_process_html_args ), s: c_ptr(lws_process_html_state ) ):c_int;
+extern "struct lws_tokens" record lws_tokens{
+	var token: c_ptr(c_char);
+	var token_len: c_int;
+}
+
+extern "struct lws_token_limits" record lws_token_limits{
+	var token_limit: unsigned short [94];
+}
+
+extern proc  lws_token_to_string(token: enum lws_token_indexes ):c_ptr( unsigned char );
+extern proc  lws_hdr_total_length(_args1: , default: , wsi: c_ptr(lws ), h: enum lws_token_indexes ):c_int;
+extern proc  lws_hdr_fragment_length(_args1: , default: , wsi: c_ptr(lws ), h: enum lws_token_indexes, frag_idx: c_int ):c_int;
+extern proc  lws_hdr_copy(wsi: c_ptr(lws ), dest: c_ptr(c_char), len: c_int, h: enum lws_token_indexes ):c_int;
+extern proc  lws_hdr_copy_fragment(wsi: c_ptr(lws ), dest: c_ptr(c_char), len: c_int, h: enum lws_token_indexes, frag_idx: c_int ):c_int;
+extern proc  lws_get_urlarg_by_name(wsi: c_ptr(lws ), name: c_string, buf: c_ptr(c_char), len: c_int ):c_string;
+extern proc  lws_add_http_header_status(_args1: , default: , wsi: c_ptr(lws ), code: c_uint, p: c_ptr(unsigned char ), end: c_ptr(c_uchar) ):c_int;
+extern proc  lws_add_http_header_by_name(_args1: , default: , wsi: c_ptr(lws ), name: c_ptr( unsigned char ), value: c_ptr( unsigned char ), length: c_int, p: c_ptr(unsigned char ), end: c_ptr(c_uchar) ):c_int;
+extern proc  lws_add_http_header_by_token(_args1: , default: , wsi: c_ptr(lws ), token: enum lws_token_indexes, value: c_ptr( unsigned char ), length: c_int, p: c_ptr(unsigned char ), end: c_ptr(c_uchar) ):c_int;
+extern proc  lws_add_http_header_content_length(_args1: , default: , wsi: c_ptr(lws ), content_length: lws_filepos_t, p: c_ptr(unsigned char ), end: c_ptr(c_uchar) ):c_int;
+extern proc  lws_finalize_http_header(_args1: , default: , wsi: c_ptr(lws ), p: c_ptr(unsigned char ), end: c_ptr(c_uchar) ):c_int;
+extern proc  lws_finalize_write_http_header(_args1: , default: , wsi: c_ptr(lws ), start: c_ptr(c_uchar), p: c_ptr(unsigned char ), end: c_ptr(c_uchar) ):c_int;
+extern proc  lws_add_http_common_headers(_args1: , default: , wsi: c_ptr(lws ), code: c_uint, content_type: c_string, content_len: lws_filepos_t, p: c_ptr(unsigned char ), end: c_ptr(c_uchar) ):c_int;
+extern record lws_spa_fileupload_cb{
+}
+
+extern "struct lws_spa" record lws_spa{
+}
+
+extern proc  lws_spa_create(_struct lws_spa: lws_spa, wsi: c_ptr(lws ), param_names: c_ptr(c_string ), count_params: c_int, max_storage: c_int, opt_cb: lws_spa_fileupload_cb, opt_data: c_void_ptr ):c_ptr(lws_spa );
+extern proc  lws_spa_process(spa: c_ptr(lws_spa ), in: c_string, len: c_int ):c_int;
+extern proc  lws_spa_finalize(spa: c_ptr(lws_spa ) ):c_int;
+extern proc  lws_spa_get_length(spa: c_ptr(lws_spa ), n: c_int ):c_int;
+extern proc  lws_spa_get_string(spa: c_ptr(lws_spa ), n: c_int ):c_string;
+extern proc  lws_spa_destroy(spa: c_ptr(lws_spa ) ):c_int;
+extern proc  lws_urlencode(escaped: c_ptr(c_char), string: c_string, len: c_int ):c_string;
+extern proc  lws_urldecode(string: c_ptr(c_char), escaped: c_string, len: c_int ):c_int;
+extern proc  lws_return_http_status(wsi: c_ptr(lws ), code: c_uint, html_body: c_string ):c_int;
+extern proc  lws_http_redirect(_args1: , default: , wsi: c_ptr(lws ), code: c_int, loc: c_ptr( unsigned char ), len: c_int, p: c_ptr(unsigned char ), end: c_ptr(c_uchar) ):c_int;
+extern proc  lws_http_transaction_completed(_args1: , default: , wsi: c_ptr(lws ) ):c_int;
+extern proc  lws_sql_purify(escaped: c_ptr(c_char), string: c_string, len: c_int ):c_string;
+extern proc  lws_json_purify(escaped: c_ptr(c_char), string: c_string, len: c_int ):c_string;
+extern proc  lws_plat_write_cert(vhost: c_ptr(lws_vhost ), is_key: c_int, fd: c_int, buf: c_void_ptr, len: c_int ):c_int;
+extern proc  lws_plat_write_file(filename: c_string, buf: c_void_ptr, len: c_int ):c_int;
+extern proc  lws_plat_read_file(filename: c_string, buf: c_void_ptr, len: c_int ):c_int;
+extern proc  lws_plat_recommended_rsa_bits(default:  ):c_int;
+extern proc  lws_set_timeout(wsi: c_ptr(lws ), reason: enum pending_timeout, secs: c_int ):c_void_ptr;
+extern proc  lws_set_timer_usecs(wsi: c_ptr(lws ), usecs: lws_usec_t ):c_void_ptr;
+extern proc  lws_timed_callback_vh_protocol(vh: c_ptr(lws_vhost ), prot: c_ptr( lws_protocols ), reason: c_int, secs: c_int ):c_int;
+extern "struct lws_write_passthru" record lws_write_passthru{
+	var wsi: c_ptr(lws );
+	var buf: c_ptr(c_uchar);
+	var len: c_int;
+	var wp: enum lws_write_protocol;
+}
+
+extern proc  lws_write(wsi: c_ptr(lws ), buf: c_ptr(c_uchar), len: c_int, protocol: enum lws_write_protocol ):c_int;
+extern proc  lws_write_ws_flags(is_start: c_int, is_end: c_int, _args4:  ):c_int;
+extern proc  lws_callback_on_writable(wsi: c_ptr(lws ) ):c_int;
+extern proc  lws_callback_on_writable_all_protocol(context: c_ptr( lws_context ), protocol: c_ptr( lws_protocols ) ):c_int;
+extern proc  lws_callback_on_writable_all_protocol_vhost(vhost: c_ptr( lws_vhost ), protocol: c_ptr( lws_protocols ) ):c_int;
+extern proc  lws_callback_all_protocol(context: c_ptr(lws_context ), protocol: c_ptr( lws_protocols ), reason: c_int ):c_int;
+extern proc  lws_callback_all_protocol_vhost(_args2: , vh: c_ptr(lws_vhost ), protocol: c_ptr( lws_protocols ), reason: c_int ):c_int;
+extern proc  lws_callback_all_protocol_vhost_args(vh: c_ptr(lws_vhost ), protocol: c_ptr( lws_protocols ), reason: c_int, argp: c_void_ptr, len: c_int ):c_int;
+extern proc  lws_callback_vhost_protocols(_args2: , wsi: c_ptr(lws ), reason: c_int, in: c_void_ptr, len: c_int ):c_int;
+extern proc  lws_callback_vhost_protocols_vhost(vh: c_ptr(lws_vhost ), reason: c_int, in: c_void_ptr, len: c_int ):c_int;
+extern proc  lws_callback_http_dummy(wsi: c_ptr(lws ), reason: enum lws_callback_reasons, user: c_void_ptr, in: c_void_ptr, len: c_int ):c_int;
+extern proc  lws_get_socket_fd(_lws_sockfd_type: lws_sockfd_type, wsi: c_ptr(lws ) ):lws_sockfd_type;
+extern proc  lws_get_peer_write_allowance(default:  ):c_int;
+extern proc  lws_rx_flow_control(wsi: c_ptr(lws ), enable: c_int ):c_int;
+extern proc  lws_rx_flow_allow_all_protocol(context: c_ptr( lws_context ), protocol: c_ptr( lws_protocols ) ):c_void_ptr;
+extern proc  lws_remaining_packet_payload(default:  ):c_int;
+extern proc  lws_adopt_socket(_struct lws: lws, context: c_ptr(lws_context ), accept_fd: lws_sockfd_type ):c_ptr(lws );
+extern proc  lws_adopt_socket_vhost(_struct lws: lws, vh: c_ptr(lws_vhost ), accept_fd: lws_sockfd_type ):c_ptr(lws );
+extern record lws_adoption_type{
+}
+
+extern record lws_sock_file_fd_type{
+}
+
+extern "struct lws_udp" record lws_udp{
+	var sa: sockaddr;
+	var salen: socklen_t;
+	var sa_pending: sockaddr;
+	var salen_pending: socklen_t;
+}
+
+extern proc  lws_adopt_descriptor_vhost(_struct lws: lws, vh: c_ptr(lws_vhost ), type: lws_adoption_type, fd: lws_sock_file_fd_type, vh_prot_name: c_string, parent: c_ptr(lws ) ):c_ptr(lws );
+extern proc  lws_adopt_socket_readbuf(_struct lws: lws, context: c_ptr(lws_context ), accept_fd: lws_sockfd_type, readbuf: c_string, len: c_int ):c_ptr(lws );
+extern proc  lws_adopt_socket_vhost_readbuf(_struct lws: lws, vhost: c_ptr(lws_vhost ), accept_fd: lws_sockfd_type, readbuf: c_string, len: c_int ):c_ptr(lws );
+extern proc  lws_create_adopt_udp(_struct lws: lws, vhost: c_ptr(lws_vhost ), port: c_int, flags: c_int, protocol_name: c_string, parent_wsi: c_ptr(lws ) ):c_ptr(lws );
+extern proc  lws_canonical_hostname(_args2: , context: c_ptr(lws_context ) ):c_string;
+extern proc  lws_get_peer_addresses(wsi: c_ptr(lws ), fd: lws_sockfd_type, name: c_ptr(c_char), name_len: c_int, rip: c_ptr(c_char), rip_len: c_int ):c_void_ptr;
+extern proc  lws_get_peer_simple(wsi: c_ptr(lws ), name: c_ptr(c_char), namelen: c_int ):c_string;
+extern proc  lws_interface_to_sa(ipv6: c_int, ifname: c_string, addr: c_ptr(sockaddr_in ), addrlen: c_int ):c_int;
+extern "struct lws_dll" record lws_dll{
+	var prev: c_ptr(lws_dll );
+	var next: c_ptr(lws_dll );
+}
+
+extern proc  lws_dll_add_front(d: c_ptr(lws_dll ), phead: c_ptr(lws_dll ) ):c_void_ptr;
+extern proc  lws_dll_remove(d: c_ptr(lws_dll ) ):c_void_ptr;
+extern "struct lws_dll_lws" record lws_dll_lws{
+	var prev: c_ptr(lws_dll_lws );
+	var next: c_ptr(lws_dll_lws );
+}
+
+extern proc  lws_dll_lws_add_front(_head: c_ptr(lws_dll_lws ), _args3:  ):c_void_ptr;
+extern proc  lws_dll_lws_remove(_args2:  ):c_void_ptr;
+extern proc  lws_snprintf(_args2: , str: c_ptr(c_char), size: c_int, format: c_string ):c_int;
+extern proc  lws_strncpy(dest: c_ptr(c_char), src: c_string, size: c_int ):c_ptr(c_char);
+extern proc  lws_get_random(context: c_ptr(lws_context ), buf: c_void_ptr, len: c_int ):c_int;
+extern proc  lws_daemonize(_args1: , default: , _lock_path: c_string ):c_int;
+extern proc  lws_get_library_version(_args2:  ):c_string;
+extern proc  lws_wsi_user(wsi: c_ptr(lws ) ):c_void_ptr;
+extern proc  lws_set_wsi_user(wsi: c_ptr(lws ), user: c_void_ptr ):c_void_ptr;
+extern proc  lws_parse_uri(_args1: , default: , p: c_ptr(c_char), prot: c_ptr( char ), ads: c_ptr( char ), port: c_ptr(c_int), path: c_ptr( char ) ):c_int;
+extern proc  lws_now_secs(default:  ):c_ulong;
+extern proc  lws_compare_time_t(context: c_ptr(lws_context ), t1: time_t, t2: time_t ):c_int;
+extern proc  lws_get_context(_args2: , _struct lws_context: lws_context, wsi: c_ptr( lws ) ):c_ptr(lws_context );
+extern proc  lws_get_count_threads(_args1: , default: , context: c_ptr(lws_context ) ):c_int;
+extern proc  lws_get_parent(_args2: , _struct lws: lws, wsi: c_ptr( lws ) ):c_ptr(lws );
+extern proc  lws_get_child(_args2: , _struct lws: lws, wsi: c_ptr( lws ) ):c_ptr(lws );
+extern proc  lws_get_udp(_args2: , _struct lws_udp: lws_udp, wsi: c_ptr( lws ) ):c_ptr( lws_udp );
+extern proc  lws_set_parent_carries_io(wsi: c_ptr(lws ) ):c_void_ptr;
+extern proc  lws_get_opaque_parent_data(wsi: c_ptr( lws ) ):c_void_ptr;
+extern proc  lws_set_opaque_parent_data(wsi: c_ptr(lws ), data: c_void_ptr ):c_void_ptr;
+extern proc  lws_get_child_pending_on_writable(wsi: c_ptr( lws ) ):c_int;
+extern proc  lws_clear_child_pending_on_writable(wsi: c_ptr(lws ) ):c_void_ptr;
+extern proc  lws_get_close_length(wsi: c_ptr(lws ) ):c_int;
+extern proc  lws_get_close_payload(wsi: c_ptr(lws ) ):c_ptr(c_uchar);
+extern proc  lws_get_network_wsi(_struct lws: lws, wsi: c_ptr(lws ) ):c_ptr(lws );
+extern proc  lws_read(wsi: c_ptr(lws ), buf: c_ptr(c_uchar), len: lws_filepos_t ):c_int;
+extern proc  lws_set_allocator(realloc: c_ptr(void ()(void , int, const char )) ):c_void_ptr;
+extern proc  lws_send_pipe_choked(_args1: , default: , wsi: c_ptr(lws ) ):c_int;
+extern proc  lws_is_final_fragment(wsi: c_ptr(lws ) ):c_int;
+extern proc  lws_is_first_fragment(wsi: c_ptr(lws ) ):c_int;
+extern proc  lws_get_reserved_bits(wsi: c_ptr(lws ) ):c_uchar;
+extern proc  lws_partial_buffered(_args1: , default: , wsi: c_ptr(lws ) ):c_int;
+extern proc  lws_frame_is_binary(_args1: , default: , wsi: c_ptr(lws ) ):c_int;
+extern proc  lws_is_ssl(wsi: c_ptr(lws ) ):c_int;
+extern proc  lws_is_cgi(wsi: c_ptr(lws ) ):c_int;
+extern "struct lws_wifi_scan" record lws_wifi_scan{
+	var next: c_ptr(lws_wifi_scan );
+	var ssid: char [32];
+	var rssi: int32_t;
+	var bssid: uint8_t [6];
+	var count: uint8_t;
+	var channel: uint8_t;
+	var authmode: uint8_t;
+}
+
+extern proc  lws_get_ssl(_SSL: SSL, wsi: c_ptr(lws ) ):c_ptr(SSL );
+extern proc  lws_tls_peer_cert_info(wsi: c_ptr(lws ), type: enum lws_tls_cert_info, buf: c_ptr(union lws_tls_cert_info_results ), len: c_int ):c_int;
+extern proc  lws_tls_vhost_cert_info(vhost: c_ptr(lws_vhost ), type: enum lws_tls_cert_info, buf: c_ptr(union lws_tls_cert_info_results ), len: c_int ):c_int;
+extern proc  lws_tls_acme_sni_cert_create(vhost: c_ptr(lws_vhost ), san_a: c_string, san_b: c_string ):c_int;
+extern proc  lws_tls_acme_sni_csr_create(context: c_ptr(lws_context ), elements: c_ptr( char []), csr: c_ptr(uint8_t ), csr_len: c_int, privkey_pem: c_ptr(char ), privkey_len: c_ptr(c_int) ):c_int;
+extern proc  lws_tls_cert_updated(context: c_ptr(lws_context ), certpath: c_string, keypath: c_string, mem_cert: c_string, len_mem_cert: c_int, mem_privkey: c_string, len_mem_privkey: c_int ):c_int;
+extern "struct lws_ring" record lws_ring{
+}
+
+extern proc  lws_ring_create(_struct lws_ring: lws_ring, element_len: c_int, count: c_int, destroy_element: c_ptr(void ()(void )) ):c_ptr(lws_ring );
+extern proc  lws_ring_destroy(ring: c_ptr(lws_ring ) ):c_void_ptr;
+extern proc  lws_ring_get_count_free_elements(default:  ):c_int;
+extern proc  lws_ring_get_count_waiting_elements(default:  ):c_int;
+extern proc  lws_ring_insert(default:  ):c_int;
+extern proc  lws_ring_consume(default:  ):c_int;
+extern proc  lws_ring_get_element(ring: c_ptr(lws_ring ), tail: c_ptr(uint32_t ) ):c_ptr( void );
+extern proc  lws_ring_update_oldest_tail(ring: c_ptr(lws_ring ), tail: uint32_t ):c_void_ptr;
+extern proc  lws_ring_get_oldest_tail(_uint32_t: uint32_t, ring: c_ptr(lws_ring ) ):uint32_t;
+extern proc  lws_ring_next_linear_insert_range(ring: c_ptr(lws_ring ), start: c_ptr(void ), bytes: c_ptr(c_int) ):c_int;
+extern proc  lws_ring_bump_head(ring: c_ptr(lws_ring ), bytes: c_int ):c_void_ptr;
+extern proc  lws_ring_dump(ring: c_ptr(lws_ring ), tail: c_ptr(uint32_t ) ):c_void_ptr;
+extern proc  lws_SHA1(d: c_ptr( unsigned char ), n: c_int, md: c_ptr(c_uchar) ):c_ptr(c_uchar);
+extern proc  lws_b64_encode_string(in: c_string, in_len: c_int, out: c_ptr(c_char), out_size: c_int ):c_int;
+extern proc  lws_b64_encode_string_url(in: c_string, in_len: c_int, out: c_ptr(c_char), out_size: c_int ):c_int;
+extern proc  lws_b64_decode_string(in: c_string, out: c_ptr(c_char), out_size: c_int ):c_int;
+extern proc  lws_b64_decode_string_len(in: c_string, in_len: c_int, out: c_ptr(c_char), out_size: c_int ):c_int;
+extern "struct lws_cgi_args" record lws_cgi_args{
+	var stdwsi: c_ptr(lws );
+	var ch: enum lws_enum_stdinouterr;
+	var data: c_ptr(c_uchar);
+	var hdr_state: enum lws_cgi_hdr_state;
+	var len: c_int;
+}
+
+extern "struct lws_plat_file_ops" record lws_plat_file_ops{
+}
+
+extern "struct lws_fop_fd" record lws_fop_fd{
+	var fd: lws_filefd_type;
+	var fops: c_ptr( lws_plat_file_ops );
+	var filesystem_priv: c_void_ptr;
+	var pos: lws_filepos_t;
+	var len: lws_filepos_t;
+	var flags: lws_fop_flags_t;
+	var mod_time: uint32_t;
+}
+
+extern record lws_fop_fd_t{
+}
+
+extern "struct lws_fops_index" record lws_fops_index{
+	var sig: c_string;
+	var len: uint8_t;
+}
+
+extern "struct lws_plat_file_ops" record lws_plat_file_ops{
+	var open: c_ptr(lws_fop_fd_t ()(const lws_plat_file_ops , const char , const char , lws_fop_flags_t ));
+	var close: c_ptr(int ()(lws_fop_fd_t ));
+	var seek_cur: c_ptr(lws_fileofs_t ()(lws_fop_fd_t, lws_fileofs_t));
+	var read: c_ptr(int ()(lws_fop_fd_t, lws_filepos_t , uint8_t , lws_filepos_t));
+	var write: c_ptr(int ()(lws_fop_fd_t, lws_filepos_t , uint8_t , lws_filepos_t));
+	var fi: lws_fops_index [3];
+	var next: c_ptr( lws_plat_file_ops );
+}
+
+extern proc  lws_get_fops(_args2: , _struct lws_plat_file_ops: lws_plat_file_ops, context: c_ptr(lws_context ) ):c_ptr(lws_plat_file_ops );
+extern proc  lws_set_fops(context: c_ptr(lws_context ), fops: c_ptr( lws_plat_file_ops ) ):c_void_ptr;
+extern proc  lws_vfs_tell(_args1: , default: , _lws_filepos_t: lws_filepos_t, fop_fd: lws_fop_fd_t ):lws_filepos_t;
+extern proc  lws_vfs_get_length(_args1: , default: , _lws_filepos_t: lws_filepos_t, fop_fd: lws_fop_fd_t ):lws_filepos_t;
+extern proc  lws_vfs_get_mod_time(_args1: , default: , _uint32_t: uint32_t, fop_fd: lws_fop_fd_t ):uint32_t;
+extern proc  lws_vfs_file_seek_set(_lws_fileofs_t: lws_fileofs_t, fop_fd: lws_fop_fd_t, offset: lws_fileofs_t ):lws_fileofs_t;
+extern proc  lws_vfs_file_seek_end(_lws_fileofs_t: lws_fileofs_t, fop_fd: lws_fop_fd_t, offset: lws_fileofs_t ):lws_fileofs_t;
+extern proc  lws_vfs_file_open(_args1: , default: , _lws_fop_fd_t: lws_fop_fd_t, fops: c_ptr( lws_plat_file_ops ), vfs_path: c_string, flags: c_ptr(lws_fop_flags_t ) ):lws_fop_fd_t;
+extern proc  lws_vfs_file_close(_args2:  ):c_int;
+extern proc  lws_vfs_file_seek_cur(_lws_fileofs_t: lws_fileofs_t, fop_fd: lws_fop_fd_t, offset: lws_fileofs_t, _args4:  ):lws_fileofs_t;
+extern proc  lws_vfs_file_read(_args1: , fop_fd: lws_fop_fd_t, amount: c_ptr(lws_filepos_t ), buf: c_ptr(uint8_t ), len: lws_filepos_t, _args6:  ):c_int;
+extern proc  lws_vfs_file_write(_args1: , fop_fd: lws_fop_fd_t, amount: c_ptr(lws_filepos_t ), buf: c_ptr(uint8_t ), len: lws_filepos_t, _args6:  ):c_int;
+extern proc  _lws_plat_file_open(_lws_fop_fd_t: lws_fop_fd_t, fops: c_ptr( lws_plat_file_ops ), filename: c_string, vpath: c_string, flags: c_ptr(lws_fop_flags_t ) ):lws_fop_fd_t;
+extern proc  _lws_plat_file_close(fop_fd: c_ptr(lws_fop_fd_t ) ):c_int;
+extern proc  _lws_plat_file_seek_cur(_lws_fileofs_t: lws_fileofs_t, fop_fd: lws_fop_fd_t, offset: lws_fileofs_t ):lws_fileofs_t;
+extern proc  _lws_plat_file_read(fop_fd: lws_fop_fd_t, amount: c_ptr(lws_filepos_t ), buf: c_ptr(uint8_t ), len: lws_filepos_t ):c_int;
+extern proc  _lws_plat_file_write(fop_fd: lws_fop_fd_t, amount: c_ptr(lws_filepos_t ), buf: c_ptr(uint8_t ), len: lws_filepos_t ):c_int;
+extern proc  lws_alloc_vfs_file(context: c_ptr(lws_context ), filename: c_string, buf: c_ptr(uint8_t ), amount: c_ptr(lws_filepos_t ) ):c_int;
+extern "struct lejp_ctx" record lejp_ctx{
+}
+
+extern proc  _lejp_callback(reason: c_char ):signed char;
+extern record lejp_callback{
+}
+
+extern "struct _lejp_stack" record _lejp_stack{
+	var s: c_char;
+	var p: c_char;
+	var i: c_char;
+	var b: c_char;
+}
+
+extern "struct lejp_ctx" record lejp_ctx{
+	var callback: c_ptr(signed char ()(lejp_ctx , char));
+	var user: c_void_ptr;
+	var paths: c_ptr(c_string );
+	var st: _lejp_stack [12];
+	var i: uint16_t [5];
+	var wild: uint16_t [5];
+	var path: char [128];
+	var buf: char [255];
+	var line: uint32_t;
+	var uni: uint16_t;
+	var npos: uint8_t;
+	var dcount: uint8_t;
+	var f: uint8_t;
+	var sp: uint8_t;
+	var ipos: uint8_t;
+	var ppos: uint8_t;
+	var count_paths: uint8_t;
+	var path_match: uint8_t;
+	var path_match_len: uint8_t;
+	var wildcount: uint8_t;
+}
+
+extern proc  lejp_construct(ctx: c_ptr(lejp_ctx ), callback: c_ptr(signed char ()(lejp_ctx , char)), user: c_void_ptr, paths: c_ptr(c_string ), paths_count: c_uchar ):c_void_ptr;
+extern proc  lejp_destruct(ctx: c_ptr(lejp_ctx ) ):c_void_ptr;
+extern proc  lejp_parse(ctx: c_ptr(lejp_ctx ), json: c_ptr( unsigned char ), len: c_int ):c_int;
+extern proc  lejp_change_callback(ctx: c_ptr(lejp_ctx ), callback: c_ptr(signed char ()(lejp_ctx , char)) ):c_void_ptr;
+extern proc  lejp_get_wildcard(ctx: c_ptr(lejp_ctx ), wildcard: c_int, dest: c_ptr(c_char), len: c_int ):c_int;
+extern proc  lws_stats_get(_uint64_t: uint64_t, context: c_ptr(lws_context ), index: c_int, _args4:  ):uint64_t;
+extern proc  lws_stats_log_dump(_args2:  ):c_void_ptr;
+
+}
