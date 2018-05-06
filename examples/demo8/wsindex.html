@@ -1,23 +1,17 @@
-<!DOCTYPE html>
-<html>
+<!DOCTYPE HTML>
+<html lang="en">
 
 <head>
-  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js"></script>
+  <meta charset="utf-8">
+  <title>Choyote</title>
 
-
+  <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.3/socket.io.js"></script> -->
+  <script src="https://d3js.org/d3.v5.min.js"></script>
   <script>
-    //var socket = new WebSocket("ws://" + document.domain + ':' + location.port, "example-protocol");
+    //This is the library. I need to create a js lib soon.
+    //To use chrest pubsub websocket you will need to have use this library. Soon I add it in a separated js.
 
-    function update(msg) {
-      document.getElementById("num").innerHTML = msg;
-    }
-
-    function update2(msg) {
-      document.getElementById("num2").innerHTML += msg + "<br>";
-    }
-
-//Class that deals with websocket 
+    //Class that deals with websocket
     function ChrestWs(addr) {
       this.addr = addr;
       this.protocol = "chrest-pubsub";
@@ -64,6 +58,7 @@
           //   var cb = $this.datacb[index];
           //   cb(msg);
           // }
+          console.log("Raw data ", msg.data);
           try {
             console.log("On message2");
             var wsCMD = JSON.parse(msg.data);
@@ -152,82 +147,46 @@
       };
 
 
-
     } //end function
   </script>
-
 </head>
-<title>Websocket example</title>
-
 
 <body>
+  <h1>WEBSOCKETS ON A PLANE!!</h1>
+  <div id="stage"></div>
 
-  <div id="sine-graph" style="width: 400px; height: 400px;">
+  <script>
+    var svg = d3.select("#stage").append("svg:svg");
+    svg.attr('width', 800).attr('height', 500);
+    var coyote = svg.append("circle").attr("cx", 400).attr("cy", 250).attr("r", 25).style("fill", "purple");
+    var road_runner = svg.append("circle").attr("cx", 200).attr("cy", 125).attr("r", 25).style("fill", "brown");
 
-    <p id="num"></p>
+    var conn = new ChrestWs("ws://" + document.domain + ':' + 8000);
+    //This function will call the callback when it connects and pass the connects as parameter
+    conn.Connect(function (ws) {
+      //WS is the connection parameter that can be used to subscribe or publish data.
 
-    <p id="num2"></p>
+      ws.Subscribe("data", function ($this, data, cmd) {
 
-    <script>
-      var conn = new ChrestWs("ws://" + document.domain + ':' + 8000);
+        // Data is an array containing json objects sent by the server.
+        var index;
+        for (index = 0; index < data.length; ++index) {
+          //here you will need to get the data and plot it or draw it. Using d3js.
+          //Every time that the data arrives in client, this function is called.
+          console.log("Receving from server ", data[index]);
+          var obj=data[index]
+          road_runner.attr('cx', obj.x);
+          road_runner.attr('cy', obj.y);
 
-      var datax = [];
-      var datay = [];
-
-      //connects to websoket server and call the callback when it is connected
-      conn.Connect(function (ws) {
-        console.log("Connected");
-        console.log(ws);
-
-        //subscribe "data" channel and call the callback when data arrives.
-        ws.Subscribe("data", function ($this, datum, cmd) {
-          update2(datum);
-
-          var index;
-          for (index = 0; index < datum.length; ++index) {
-            var p = datum[index];
-            console.log("+ = ", p);
-            datax.push(p.x);
-            datay.push(p.y);
-
-          }
-          var my_plot = {
-            x: datax,
-            y: datay,
-            type: 'scatter',
-          };
-          Plotly.newPlot('sine-graph', [my_plot]);
-
-          console.log("#data cb1", datum[0], " ");
-          //$this.Publish("log", "Received " + datum);
-        });
-
-        ws.Subscribe("log", function ($this, datum, cmd) {
-          //update2(datum);
-          //console.log("Log ", datum);
-        });
-
-        var myVar = setInterval(myTimer, 1000);
-        var x=0.0;
-        var y=0.0;
-
-        function myTimer() {
-          x++;
-          y= Math.cos(x/10); 
-          //Send to the server some points. 
-          
-          ws.Publish("data",{
-            x:x,
-            y:y
-          });
-            
         }
 
-
-
-
       });
-    </script>
+
+    });
+  </script>
+
+
+
 </body>
 
 </html>

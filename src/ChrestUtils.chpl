@@ -28,7 +28,28 @@ proc jsonToObject(str:string, type eltType):eltType{
 
     }catch{
         writeln("Could not convert json to object");
+        
+        writeln("++++++++++++++++++++++++++++");
+        writeln(str);
+        writeln("^^^^^^^^^");
+
         return new eltType();
+    }
+
+}
+
+proc objectToJson(obj):string{
+    try{
+        var jsonstr:string = "%jt".format(obj);
+        return jsonstr;
+
+    }catch{
+        writeln("Could not convert object to json");
+        writeln("++++++++++++++++++++++++++++");
+        writeln(obj);
+        writeln("^^^^^^^^^");
+
+        return "";
     }
 
 }

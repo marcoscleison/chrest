@@ -1,37 +1,44 @@
-
-// This client serializes an chapel Object and send it as Json to the server
 module Main{
-use ChrestClient;
+use ChrestWebsocketsClient;
+use Time;
 const API_HOST: string = "127.0.0.1",
       API_PORT: int = 8080;
 
-//This class is the model data to be sent to the server
+
+
+// Datapoint to be sent via websocket
+record point{
+	var x:real;
+	var y:real;
+}
+
+    class MyDataController:WebsocketController{
+        proc this(cmd:WsCliCMD){
+		    writeln("Data received ", cmd.data);
+	    }
+
+    }
 
 
     proc main(){
 
         try{
-        // Creates a Client access point
 
-            var cli = new ChrestClient(API_HOST, API_PORT);
+            var cli = new ChrestWebsocketClient(API_HOST, API_PORT);     
             
-        
-            // GET will serialize the data as form data. It never serializes as JSON
-            var res = cli.Get("/"); //Makes the request
-            res();
+            sleep(1);
 
-            writeln("Set-Cookie:",res.getHeader("Set-Cookie"));
-
-
-
-           
-        }catch e:ChrestConnectionError{
-            writeln(e);
+            var mycontroller = new MyDataController();
             
-        }catch{
-            writeln("Some Error");
-            halt(-1);
-        }
+            cli.Subscribe("data",mycontroller);
+            
+            var i:int=0;
+            while (i<10000) {
+                var p = new point(x=i,y=cos(2*3.14*i/10.0));
+                 
+                 cli.Publish("data",p);
+                 i+=1;
+            }
     }
 
 }

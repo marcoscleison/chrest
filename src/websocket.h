@@ -10,6 +10,7 @@ struct lws_context *newWsPubSubServer(int port);
 void loopWsPubSubServer(struct lws_context* context, int timeout);
 void destroyWsPubSubServer(struct lws_context* context);
 
+// //Aux
 
 void __writeWebsocketText(void* wsi, const char* text,int len);
 

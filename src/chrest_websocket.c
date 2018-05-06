@@ -28,7 +28,7 @@ static int callback_http(struct lws *wsi, enum lws_callback_reasons reason, void
     switch (reason)
     {
     case LWS_CALLBACK_HTTP:
-        lws_serve_http_file(wsi, "wsindex.html", "text/html", NULL, 0);
+        lws_serve_http_file(wsi, "./wsindex.html", "text/html", NULL, 0);
         break;
     default:
         break;
@@ -102,3 +102,4 @@ void destroyWsPubSubServer(struct lws_context* context){
 
     lws_context_destroy(context);
 }
+

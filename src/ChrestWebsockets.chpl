@@ -59,14 +59,6 @@ class ChrestWebsocketServer{
 }
 
 
-class ChrestWebsocketClient{
-
-}
-
-class WebsocketClientRouter{
-
-}
-
 
 
 
@@ -195,8 +187,13 @@ class ChrestWsPubSub{
 			writeln("Publishing extern:",channel);
 			for peer in this.peersList{
 				//if(peer.isMember(channel)){
-					peer.publish(channel,jsonstr);
-					lws_callback_on_writable_all_protocol(lws_get_context(peer.wsi), lws_get_protocol(peer.wsi));
+					if(peer==nil){
+						writeln("Error: null peer");
+					}else{
+						peer.publish(channel,jsonstr);
+						lws_callback_on_writable_all_protocol(lws_get_context(peer.wsi), lws_get_protocol(peer.wsi));
+					}
+					
 				//}
 			}
 
@@ -270,9 +267,9 @@ class ChrestWsPubSub{
 
 				if(cmd=="publish"){
 					for cli in this.peersList{
-						//if(wsi!=cli.wsi){
+						if(wsi!=cli.wsi){
 							cli.publish(channel_name,channel_data);
-						//}
+						}
 					}
 
 				}else if(cmd=="subscribe"){
@@ -340,6 +337,7 @@ export proc chest_pubsub_websocket_callback( wsi:c_void_ptr,  reason:int(32), us
 
 		if(remain==0){
 			wsPubSubRouter.Readable(wsi,s);
+			writeln("Received ",s);
 
 		}else if(remain>0){
 			wsPubSubRouter.ReadableFragment(wsi,s);
